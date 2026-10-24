@@ -1,0 +1,52 @@
+{
+  "installed_at": "2026-10-24",
+  "python": "3.12.14",
+  "astrbot": {
+    "version": "4.29.1",
+    "source": "https://pypi.org/project/astrbot/4.29.1/",
+    "repository": "https://github.com/AstrBotDevs/AstrBot"
+  },
+  "napcat": {
+    "version": "4.18.41",
+    "asset": "NapCat.Shell.Windows.Node.zip",
+    "repository": "https://github.com/NapNeko/NapCatQQ",
+    "release": "https://github.com/NapNeko/NapCatQQ/releases/tag/v4.18.41"
+  },
+  "ffmpeg": {
+    "version": "9.0.2",
+    "distribution": "Gyan essentials build",
+    "source": "https://www.gyan.dev/ffmpeg/builds/"
+  },
+  "plugins": [
+    {
+      "name": "astrbot_plugin_qzone",
+      "version": "3.1.3",
+      "repository": "https://github.com/Zhalslar/astrbot_plugin_qzone",
+      "commit": "f474c50c9b517655d8475df34ad0c129b70193d4"
+    },
+    {
+      "name": "astrbot_plugin_bilibili_ai_bot",
+      "version": "1.7.2",
+      "repository": "https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot",
+      "commit": "8ba359e5c3b9e4909475690bafa739ab5c114244"
+    },
+    {
+      "name": "astrbot_plugin_xiaoheihe_adapter",
+      "version": "1.3.3",
+      "repository": "https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter",
+      "commit": "90d3c9d4d051f912d80ba02b38d5f8f0a5a95aac"
+    },
+    {
+      "name": "astrbot_plugin_memory_companion",
+      "version": "2.3.1",
+      "repository": "https://github.com/menglimi/astrbot_plugin_memory_companion",
+      "commit": "e40a83005b0a2e0817e5680c7d14398c9ab49790"
+    },
+    {
+      "name": "astrbot_plugin_proactive_chat",
+      "version": "1.2.6",
+      "repository": "https://github.com/Pancakes-Labs/astrbot_plugin_proactive_chat",
+      "commit": "77a1d408ccd003a9d34ad4f51acfb8fc17bc35f5"
+    }
+  ]
+}

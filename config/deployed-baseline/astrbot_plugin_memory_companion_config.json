@@ -1,0 +1,282 @@
+{
+  "appearance": {
+    "theme": "月白",
+    "ui_style": "旧版"
+  },
+  "memory_capture": {
+    "enabled": true,
+    "capture_user_messages": true,
+    "capture_bot_responses": true,
+    "capture_min_chars": 2,
+    "extract_stable_facts": true,
+    "proposal_mode": "hybrid",
+    "record_relationship_edges": true,
+    "relax_mention_policy": false
+  },
+  "scope_control": {
+    "private_capture_enabled": true,
+    "group_capture_enabled": true,
+    "private_recall_enabled": true,
+    "group_recall_enabled": true,
+    "private_topology_enabled": true,
+    "group_topology_enabled": true
+  },
+  "portrait": {
+    "min_independent_evidence": 3,
+    "daily_success_limit_per_person": 1,
+    "daily_attempt_limit_per_person": 2,
+    "daily_dispatch_enabled": true,
+    "update_window_start_hour": 3,
+    "update_window_end_hour": 5,
+    "usage_min_confidence": 0.75,
+    "inferred_freshness_days": 90
+  },
+  "memory_assertions": {
+    "enabled": true,
+    "max_per_batch": 6
+  },
+  "memory_summary": {
+    "enabled": true,
+    "provider_id": "cuteq-deepseek-flash",
+    "fallback_provider_id": "",
+    "private_provider_id": "cuteq-deepseek-flash",
+    "private_fallback_provider_id": "",
+    "group_provider_id": "cuteq-deepseek-flash",
+    "group_fallback_provider_id": "",
+    "min_events": 20,
+    "trigger_event_count": 20,
+    "trigger_interval_minutes": 60,
+    "max_events_per_summary": 40,
+    "max_input_chars": 6000,
+    "max_summary_chars": 1200,
+    "provider_timeout_seconds": 300,
+    "evidence_events": 12,
+    "candidate_valid_days": 30,
+    "max_retries": 5,
+    "retry_backoff_seconds": 60,
+    "transient_retry_cooldown_minutes": 10,
+    "non_transient_retry_cooldown_minutes": 30,
+    "max_calls_per_session_hour": 24,
+    "max_concurrent_calls": 1,
+    "call_queue_timeout_seconds": 20
+  },
+  "historical_chat_import": {
+    "max_retries": 3,
+    "qq_max_range_days": 31,
+    "qq_max_messages": 5000,
+    "qq_page_size": 100,
+    "qq_max_pages": 100,
+    "qq_request_timeout_seconds": 15,
+    "merge_seconds": 120,
+    "hard_gap_minutes": 120,
+    "soft_gap_minutes": 30,
+    "max_turns": 30,
+    "max_segment_chars": 4200,
+    "package_chars": 4600,
+    "detail_package_chars": 9000
+  },
+  "retrieval": {
+    "embedding_enabled": false,
+    "embedding_provider_id": "",
+    "mode": "auto",
+    "rerank_provider_id": "",
+    "rerank_candidate_multiplier": 5,
+    "rerank_candidate_limit": 32,
+    "embedding_index_pending": false
+  },
+  "retrieval_advanced": {
+    "recall_latency_budget_ms": 0,
+    "query_vector_cache_ttl_seconds": 0.0,
+    "embedding_candidate_limit": 1200,
+    "embedding_top_k": 32,
+    "embedding_score_threshold": 0.34,
+    "embedding_weight": 0.55,
+    "embedding_timeout_ms": 5000,
+    "rerank_timeout_ms": 1200,
+    "embedding_max_text_chars": 1200,
+    "embedding_backfill_enabled": true,
+    "embedding_backfill_batch_size": 50,
+    "embedding_backfill_interval_seconds": 300,
+    "embedding_background_concurrency": 2,
+    "current_window_candidate_limit": 600,
+    "keyword_fallback_min_fts_candidates": 80,
+    "relax_keyword_min_hits": false,
+    "proactive_message_score_penalty": 1.0,
+    "dedupe_content_ratio": 0.0,
+    "non_conversation_budget": 2
+  },
+  "source_semantic": {
+    "enabled": false,
+    "provider_id": "",
+    "model_revision": "",
+    "dimensions": 0,
+    "history_backfill_enabled": false,
+    "sources_per_run": 4,
+    "provider_calls_per_run": 8,
+    "fragment_target_chars": 600,
+    "fragment_overlap_chars": 80,
+    "window_max_chars": 1800,
+    "processing_version": "source-redaction-v1"
+  },
+  "memory_injection": {
+    "enabled": true,
+    "top_k": 4,
+    "max_chars": 4000,
+    "max_item_chars": 320,
+    "temporal_aggregate_max_chars": 3600,
+    "include_raw_events": false,
+    "enable_injection_logs": true,
+    "debug_log_injection_enabled": false,
+    "debug_stage_timing_enabled": false,
+    "debug_log_max_chars": 12000,
+    "enable_tone_abstraction": true,
+    "injection_cache_ttl_seconds": 0.0,
+    "hook_request_budget_seconds": 0.0
+  },
+  "conversation_memory": {
+    "enabled": true,
+    "capture_group_messages": true,
+    "idle_gap_minutes": 20
+  },
+  "conversation_memory_advanced": {
+    "recent_events_for_followup": 12,
+    "time_window_timeline_limit": 12,
+    "recent_fact_guard_enabled": true,
+    "recent_fact_guard_hours": 3,
+    "recent_fact_guard_event_limit": 24,
+    "recent_fact_guard_max_items": 4,
+    "low_information_guard_enabled": true,
+    "low_information_gap_minutes": 20,
+    "suppress_memory_on_low_information": true,
+    "topic_shift_guard_enabled": true,
+    "suppress_memory_on_topic_shift": true,
+    "topic_shift_guard_recent_events": 6,
+    "group_actor_relevance_guard_enabled": true,
+    "cross_window_recent_continuity_enabled": true,
+    "cross_window_recent_minutes": 30,
+    "cross_window_recent_event_limit": 6,
+    "cross_window_group_to_private_enabled": true,
+    "cross_window_private_to_group_enabled": false
+  },
+  "core_memory": {
+    "enabled": true,
+    "llm_management_enabled": true,
+    "max_blocks": 8,
+    "max_chars": 800,
+    "scan_limit": 200
+  },
+  "context_orchestration": {
+    "enabled": true,
+    "query_mode": "current_message",
+    "include_intent_context": true,
+    "current_state_relevance_guard_enabled": true,
+    "contextual_query_expansion_enabled": true,
+    "contextual_query_recent_events": 12,
+    "contextual_query_anchor_limit": 8
+  },
+  "context_orchestration_advanced": {
+    "intent_max_chars": 520,
+    "self_timeline_limit": 2,
+    "user_profile_limit": 2,
+    "current_window_limit": 3,
+    "conversation_summary_limit": 2,
+    "stable_memory_limit": 3
+  },
+  "private_companion_bridge": {
+    "enabled": true,
+    "schedule_fast_context_enabled": true,
+    "outfit_fast_context_enabled": true,
+    "accept_external_records": true,
+    "enable_p5_b1_recall_gate": false,
+    "enable_p5_b1_bridge_gate": false,
+    "dedupe_prompt_context": true,
+    "prefer_memory_companion_memory": true,
+    "cross_window_emotional_continuity_enabled": false,
+    "legacy_emotion_compatibility_enabled": true,
+    "clean_proactive_history": true,
+    "suppress_self_timeline_when_companion_seen": true,
+    "suppress_user_context_when_companion_seen": true
+  },
+  "visibility": {
+    "allow_self_timeline_everywhere": true,
+    "allow_group_public_in_private": false,
+    "enable_acl_rules": true,
+    "hide_pending_review": true
+  },
+  "memory_tools": {
+    "enable_query_progress": true,
+    "enable_query_notes": true,
+    "enable_recall_tool": true,
+    "enable_remember_tool": true,
+    "enable_note_tools": true,
+    "enable_reconstruction_tool": true,
+    "enable_source_query_v2": false
+  },
+  "memory_reconstruction": {
+    "enabled": true,
+    "max_steps": 3,
+    "per_step_limit": 6,
+    "candidate_scan_limit": 96,
+    "range_batch_max_bytes": 12288,
+    "range_batch_max_messages": 48,
+    "range_batch_max_fragments": 64,
+    "range_batch_excerpt_chars": 800
+  },
+  "knowledge_graph": {
+    "enabled": true,
+    "retrieval_expansion_enabled": true,
+    "expansion_limit": 12,
+    "backfill_limit": 300
+  },
+  "livingmemory_migration": {
+    "import_limit": 5000,
+    "livingmemory_db_path": "",
+    "default_review_status": "auto"
+  },
+  "maintenance": {
+    "backup_before_import": true,
+    "sleep_backup_enabled": false,
+    "retention_raw_event_days": 30,
+    "retention_unsummarized_timeline_days": 0,
+    "pending_review_max_age_days": 30,
+    "retention_raw_event_limit": 1000,
+    "retention_summarized_timeline_days": 30,
+    "retention_injection_log_days": 14,
+    "retention_cleanup_limit": 2000,
+    "memory_decay_enabled": true,
+    "auto_schedule_enabled": true,
+    "auto_startup_delay_seconds": 120,
+    "auto_interval_hours": 24,
+    "wal_checkpoint_enabled": true,
+    "wal_checkpoint_interval_seconds": 1800,
+    "wal_checkpoint_min_bytes": 8388608,
+    "memory_decay_archive_without_summary": true,
+    "memory_decay_scan_limit": 2000,
+    "memory_decay_include_bot_self": false
+  },
+  "maintenance_audit": {
+    "enabled": false,
+    "max_candidates": 20,
+    "max_items_per_preview": 8,
+    "provider_timeout_seconds": 60,
+    "preview_expire_hours": 24
+  },
+  "maintenance_decay": {
+    "memory_decay_after_days": 180,
+    "memory_decay_idle_days": 90,
+    "memory_decay_max_importance_percent": 74,
+    "memory_decay_score_threshold_percent": 75,
+    "memory_decay_max_candidates": 120,
+    "memory_decay_max_groups": 8,
+    "memory_decay_min_items_per_summary": 4,
+    "memory_decay_max_items_per_summary": 24,
+    "memory_decay_summary_input_chars": 6000,
+    "memory_decay_summary_chars": 900,
+    "memory_decay_scan_limit": 2000,
+    "memory_decay_include_bot_self": false,
+    "memory_decay_include_tool_memories": false
+  },
+  "startup": {
+    "background_grace_seconds": 60
+  }
+}

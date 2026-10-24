@@ -1,0 +1,102 @@
+{
+  "profiles": [
+    {
+      "__template_key": "account",
+      "profile_id": "default",
+      "display_name": "默认账号",
+      "enabled": true,
+      "poll_mentions": true,
+      "poll_replies": true,
+      "dry_run": true,
+      "owner_uid": ""
+    }
+  ],
+  "polling": {
+    "poll_interval_seconds": 60,
+    "poll_jitter_seconds": 5.0,
+    "max_pages_per_poll": 3,
+    "page_size": 20,
+    "initial_backfill_count": 0
+  },
+  "providers": {
+    "llm_provider_id": "cuteq-deepseek-flash",
+    "image_provider_id": "cuteq-deepseek-flash",
+    "context_provider_id": ""
+  },
+  "context": {
+    "max_post_chars": 6000,
+    "max_thread_comments": 40,
+    "thread_reply_post_chars": 1600,
+    "thread_reply_recent_comments": 12,
+    "enable_thread_reply_compression": true,
+    "thread_reply_compression_trigger_chars": 2400,
+    "thread_reply_compressed_post_chars": 700,
+    "thread_reply_compressed_comments_chars": 1400,
+    "thread_reply_compressed_image_chars": 800,
+    "thread_reply_compression_timeout_seconds": 30,
+    "context_cache_ttl_seconds": 60,
+    "context_cache_max_entries": 256,
+    "enable_image_understanding": true,
+    "max_images_per_event": 6,
+    "image_timeout_seconds": 15,
+    "image_total_timeout_seconds": 240
+  },
+  "reply": {
+    "dry_run_mark_processed": true,
+    "max_reply_chars": 500,
+    "reply_timeout_seconds": 120,
+    "provider_fallback_grace_seconds": 60,
+    "max_retries": 3,
+    "only_explicit_mentions": true,
+    "reply_to_direct_replies": true
+  },
+  "permissions": {
+    "whitelist_mode": false,
+    "user_whitelist": [],
+    "user_blacklist": [],
+    "author_whitelist": [],
+    "author_blacklist": [],
+    "keyword_blacklist": [],
+    "map_owner_to_astrbot_admin": false
+  },
+  "network": {
+    "request_timeout_seconds": 20,
+    "connect_timeout_seconds": 8,
+    "read_timeout_seconds": 15,
+    "min_request_interval_seconds": 1.0,
+    "max_reply_concurrency": 2,
+    "max_pending_events": 50,
+    "max_pending_per_user": 5
+  },
+  "proactive_feed": {
+    "enabled": false,
+    "dry_run": true,
+    "review_required": true,
+    "interval_seconds": 900,
+    "jitter_seconds": 60,
+    "max_per_run": 1,
+    "max_per_day": 10,
+    "source": "all",
+    "topic_ids": [],
+    "fallback_sources": [
+      "all"
+    ],
+    "keywords": [],
+    "allowed_post_types": []
+  },
+  "retention": {
+    "incoming_body_days": 30,
+    "dry_run_days": 30,
+    "failed_days": 30,
+    "success_reply_days": 90,
+    "session_mapping_days": 180,
+    "dedup_days": 365,
+    "database_warn_mb": 150,
+    "database_soft_limit_mb": 200,
+    "log_total_limit_mb": 100
+  },
+  "logging": {
+    "level": "INFO",
+    "max_memory_entries": 2000
+  }
+}

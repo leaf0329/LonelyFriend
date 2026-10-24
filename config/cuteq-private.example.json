@@ -1,0 +1,13 @@
+{
+  "model": {
+    "api_key": "REPLACE_WITH_YOUR_DEEPSEEK_API_KEY",
+    "base_url": "https://api.deepseek.com/v1",
+    "model": "deepseek-flash"
+  },
+  "dashboard": {
+    "username": "cuteq",
+    "password": "REPLACE_WITH_A_NEW_RANDOM_PASSWORD"
+  },
+  "onebot_token": "REPLACE_WITH_A_NEW_RANDOM_ONEBOT_TOKEN",
+  "napcat_token": "REPLACE_WITH_A_DIFFERENT_RANDOM_NAPCAT_TOKEN"
+}
