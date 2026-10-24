@@ -1,0 +1,12 @@
+{
+  "model": "deepseek-flash",
+  "synthetic_rounds": 92,
+  "estimated_tokens_before": 2729,
+  "estimated_tokens_after": 956,
+  "latest_request_preserved": true,
+  "earliest_fact_recalled_after_real_compression": true,
+  "reply": "青柚回声",
+  "production_context_budget": 800000,
+  "production_trigger_estimated_tokens": 656000,
+  "note": "Small synthetic fixture exercises the actual compressor; no million-token load test."
+}

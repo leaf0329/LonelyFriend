@@ -80,7 +80,7 @@ def main() -> None:
         client.headers["Authorization"] = "Bearer " + result["data"]["token"]
         plugins = client.get("/api/v1/plugins")
         plugins.raise_for_status()
-        expected = ["astrbot_plugin_qzone", "astrbot_plugin_bilibili_ai_bot", "astrbot_plugin_xiaoheihe_adapter", "astrbot_plugin_memory_companion", "astrbot_plugin_proactive_chat"]
+        expected = ["astrbot_plugin_qzone", "astrbot_plugin_bilibili_ai_bot", "astrbot_plugin_xiaoheihe_adapter", "astrbot_plugin_memory_companion", "astrbot_plugin_proactive_chat", "astrbot_plugin_lonelyfriend_memory"]
         assert all(name in plugins.text for name in expected)
         failed = client.get("/api/v1/plugins/failed")
         failed.raise_for_status()

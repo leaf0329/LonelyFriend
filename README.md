@@ -1,100 +1,178 @@
-# LonelyFriend：大肥鱼 QQ 与社区角色
+# LonelyFriend
 
-2026-10-24 已完成本机安装、配置和本地联调。用户入口见 [使用说明](使用说明.md)。项目位置为 `E:\File\cuteQ`，不再包含桌宠，也不依赖桌宠运行。
+面向长期陪伴的 QQ 角色聊天项目，基于 AstrBot、NapCat 和 DeepSeek 构建。支持指定好友私聊、群聊接话，并通过插件接入 QQ 空间、B 站和小黑盒。
 
-## 当前状态
+项目重点是让角色在长期交谈中保留具体经历、识别人和事件的区别，并在需要时回查原始对话。默认角色为“大肥鱼”，可以自行修改人设。
 
-| 能力 | 当前结果 |
+## 功能
+
+- **角色聊天**：统一人设、私聊上下文、群聊近期话题和低频主动消息。
+- **聊天准入**：私聊账号、群聊和管理员分别配置；加入某个群不会自动获得私聊权限。
+- **本地长期记忆**：原文、阶段总结和结构化事实分层保存；细节不足时通过工具查原文。
+- **长消息保存**：将获准 QQ 来信的完整文字接入原文事务存储，避免普通采集路径截短消息。
+- **持续对话**：按 token 预算整理工作上下文，保留近期原文；不按固定 80 轮直接丢弃旧上下文。
+- **平台扩展**：通过现成插件使用空间草稿与发布、B 站评论和动态、小黑盒通知回复与主动浏览。
+- **后台运行**：Windows 隐藏启动、停止与名单应用入口，管理面板仅监听本机地址。
+
+## 组成
+
+| 组件 | 职责 |
 | --- | --- |
-| 本地文字聊天 | 已接入官方 DeepSeek `deepseek-flash`，经过真实 API 调用验证 |
-| 大肥鱼人设 | 已写入 AstrBot 原生人格 `dafeiyu`，模板在 `config/persona.md` |
-| 长期记忆 | 单条记录的写入、重启和新会话召回已通过；复杂个人经历的长期回忆尚未验收 |
-| QQ 接入 | NapCat 已隐藏运行，OneBot 反向连接配置完成，等待用户手机扫码 |
-| 私聊和群聊名单 | 使用原生前置白名单；6 项权限测试通过；真实本地 OneBot 测试拒绝未授权私聊且未写入角色记忆 |
-| 群聊接话 | 配置了 @唤醒、150 条群聊近期历史和 6% 主动回复抽样，真实群聊体验待登录后验收 |
-| QQ 空间 | 插件加载成功，草稿与发布命令就绪；自动发布关闭，真实发布未验证 |
-| B 站 | 插件和视频工具加载可用，等待扫码；自动评论与其他账号操作关闭，真实评论未验证 |
-| 小黑盒 | 插件加载成功，公开社区配置与 QQ 私聊分离；适配器禁用并保留模拟运行，等待扫码验收 |
-| 跨平台连续性 | 共用基础人设；没有全量互通私人记忆，也没有完成所有平台活动的统一回忆 |
-| 后台运行 | AstrBot、NapCat 均隐藏启动，管理服务仅监听回环地址，没有设置开机自启 |
-| 服务器 | 本轮没有部署远程服务器 |
+| AstrBot | 会话、人格、模型调用、工具执行和管理面板 |
+| NapCat | QQ 登录与 OneBot 消息收发 |
+| DeepSeek | 对话生成与历史整理 |
+| MemoryCompanion | 长期记忆、原文查询和会话可见性 |
+| LonelyFriend 原文保存适配器 | 将获准 QQ 来信接入完整原文存储，并保持来源和人格归属 |
+| 社区插件 | QQ 空间、B 站和小黑盒接入 |
 
-没有登录任何社交账号，没有发送真实 QQ 消息、公开帖子或评论。账号登录、指定好友与群、各平台公开活动范围需要由账号所有者完成或确定。
+第三方组件版本和提交固定在 [sources.lock.json](sources.lock.json)。本机 Python 依赖版本见 [requirements-windows.lock.txt](requirements-windows.lock.txt)。项目原文适配器针对 AstrBot 4.29.1 和 MemoryCompanion 2.3.1，升级这两个组件时需要同步验证接口兼容。
 
-## 组件与职责
+## 环境
 
-```text
-QQ账号 ←→ NapCat ←OneBot→ AstrBot ←→ DeepSeek Flash
-                           ├─ 人格、近期对话
-                           ├─ 陪伴记忆、低频主动聊天
-                           ├─ QQ空间插件
-                           ├─ B站插件（独立账号与活动记忆）
-                           └─ 小黑盒适配器（公开社区配置）
-```
+当前启动脚本面向 Windows，使用 Python 3.12、Git、NapCat Windows Node 版和 FFmpeg。模型默认接入 DeepSeek 官方 API 的 `deepseek-flash`。
 
-采用 AstrBot 4.29.1、NapCat 4.18.41、Python 3.12.14、FFmpeg 9.0.2。五个插件均使用上游代码，没有修改上游源码；安装来源、版本和提交记录在 [sources.lock.json](sources.lock.json)。
+Linux 服务器需要安装对应系统的 NapCat 和 Python 环境，并自行设置进程管理；Windows 虚拟环境不能直接复制到 Linux 使用。
 
-## 访问与权限
+## 安装
 
-- AstrBot 管理与 WebChat：`http://127.0.0.1:6185`。
-- NapCat QQ 登录：`http://127.0.0.1:6099`。
-- OneBot 接收：`ws://127.0.0.1:6199/ws`，与 NapCat 使用随机生成的共享令牌。
-- 密码和管理 Token 在本机 `data/登录信息.txt`；API 密钥与本机私密配置在 `data/cuteq-private.json`。
-- `data/cuteq-access.json` 中的 `private_qq`、`group_qq`、`admin_qq` 都是数字字符串列表；管理员身份不绕过聊天名单。
-- 原生白名单采用完整会话标识 `cuteq_qq:FriendMessage:QQ号` 和 `cuteq_qq:GroupMessage:群号`，避免群号与私聊账号相互扩大权限。
-- AstrBot 原生空白名单表示不限访问，因此本项目在名单为空时使用一个不匹配任何会话的占位项。
-- 空间和 B 站的 52 个命令通过原生命令权限设置限制为管理员，包括评论、点赞、登录和发布入口。
-- 大肥鱼的 Agent 人格当前只开放记忆工具；未开放平台写入工具或电脑控制工具。
-- 小黑盒会话前缀 `cuteq_xiaoheihe::` 路由到原生配置“大肥鱼·公开社区”，只使用小黑盒插件，不加载 QQ 私聊记忆和账号工具。该配置的 QQ 白名单豁免不会改变 QQ 主配置。
-
-QQ 私聊记忆禁止自动跨入群聊，空间草稿不会自动采集群聊记录。B 站安全共享保持关闭；未来若绑定主人身份，可使用上游现有的受限摘要共享，再单独验证实际边界。
-
-## 文件与常用操作
-
-| 位置 | 用途 |
-| --- | --- |
-| `启动cuteQ.vbs` / `停止cuteQ.vbs` | 无窗口启动、停止项目后台进程 |
-| `应用聊天名单.vbs` | 校验名单后后台重启并应用；不重置模型或账号配置 |
-| `config/persona.md` | 初始人设模板 |
-| `scripts/manage.ps1` / `scripts/napcat.ps1` | 管理本项目记录的进程，核对 PID、程序路径和创建时间 |
-| `scripts/set_access.py` | 应用名单；`--check` 只检查 |
-| `scripts/configure.py` | **初始化脚本，会重置模型、平台和插件初始设置，日常不要用来应用名单** |
-| `scripts/prepare_public_profile.py` | 初始化公开社区路由和管理员命令权限，需要 AstrBot 已启动 |
-| `scripts/verify.py` | 本地集成验收；`--chat` 额外调用真实模型验证验收记忆，会消耗 API 额度 |
-| `tests/test_access.py` | 原生访问控制的 6 项针对性测试 |
-| `.venv/` | 项目 Python 运行环境 |
-| `runtime/` | NapCat 与 FFmpeg，本机运行必须保留 |
-| `data/` | 账号、配置、插件、角色、对话与记忆，不公开上传 |
-| `logs/` | 运行日志，可能含聊天或管理信息，不公开上传 |
-| `.cache/` | 安装下载与依赖缓存；不是历史版本备份 |
-
-日常使用不需要运行命令。维护时，在项目根目录使用：
+### 1. 获取项目与 Python 依赖
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\set_access.py --check
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe scripts\verify.py
+git clone https://github.com/leaf0329/LonelyFriend.git
+cd LonelyFriend
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-windows.lock.txt
 ```
 
-已经验证隐藏启动入口、模型真实回复、重启后新会话召回、未授权私聊阻断、插件加载、管理员命令权限、视频生成与读取。验收记录为 `data/verification.json`。这些结果不等同于各平台真实账号登录或公开内容可见性验收。
+### 2. 获取固定版本插件
 
-## 重建与迁移
+```powershell
+$manifest = Get-Content sources.lock.json -Raw | ConvertFrom-Json
+New-Item -ItemType Directory -Path data/plugins -Force | Out-Null
+foreach ($pluginItem in $manifest.plugins) {
+    $pluginPath = Join-Path data/plugins $pluginItem.name
+    git init $pluginPath
+    git -C $pluginPath remote add origin $pluginItem.repository
+    git -C $pluginPath fetch --depth 1 origin $pluginItem.commit
+    git -C $pluginPath checkout --detach FETCH_HEAD
+}
+```
 
-在兼容的 Python 3.12 独立环境安装 `requirements.txt`，再按 `sources.lock.json` 的仓库与提交恢复五个插件到 `data/plugins/`。插件额外依赖应使用对应提交的要求；当前主要新增项已固定在 `requirements.txt`，其余由 AstrBot 自身依赖提供。安装 Windows Node 版 NapCat 和 FFmpeg 到 `runtime/`，首次配置时准备私密配置、运行 `scripts/configure.py`，启动后运行 `scripts/prepare_public_profile.py`。
+以上步骤适用于首次安装。已有插件目录应先核对本地改动，再更新版本。项目自带的原文适配器会由初始化脚本安装到 AstrBot 插件目录。
 
-现有安装可直接使用，重建步骤供维护时参考；未验收在一台全新电脑上从零恢复。跨系统迁移需重装运行环境和对应平台的 NapCat，保留 `data/` 中的账号、配置和记忆，并重新核对路径与登录状态。Python 虚拟环境还依赖当前用户 AppData 中的 Python 3.12.14，不应单独删除那个解释器。
+### 3. 准备运行组件
 
-本项目仓库为 [leaf0329/LonelyFriend](https://github.com/leaf0329/LonelyFriend)，本地目录继续使用 `E:\File\cuteQ`。记忆改进前的部署基线标记为 `baseline-deployed-2026-10-24`。`config/deployed-baseline/` 保存脱敏后的部署参数，`sources.lock.json` 保存上游版本与提交，`requirements-windows.lock.txt` 保存本机 Python 依赖版本。
+从 [NapCat 发布页](https://github.com/NapNeko/NapCatQQ/releases/tag/v4.18.41) 获取 `NapCat.Shell.Windows.Node.zip`，解压后保证存在：
 
-模型密钥、管理密码、平台登录凭据、QQ 名单、聊天记录和记忆库留在本机，不纳入公开仓库。`data/`、`logs/`、`runtime/` 与缓存已加入忽略列表。旁边的 `E:\File\cuteQ参考资料` 是之前保留的参考材料，不属于程序运行目录。旧桌宠历史继续保存在原仓库。
+```text
+runtime/napcat/node.exe
+runtime/napcat/index.js
+```
 
-## 上游资料
+从 [FFmpeg Windows 构建页](https://www.gyan.dev/ffmpeg/builds/) 获取 essentials 构建，保留如下目录结构：
+
+```text
+runtime/ffmpeg/<构建目录>/bin/ffmpeg.exe
+runtime/ffmpeg/<构建目录>/bin/ffprobe.exe
+```
+
+### 4. 配置模型与本机凭据
+
+```powershell
+Copy-Item config/cuteq-private.example.json data/cuteq-private.json
+```
+
+编辑 `data/cuteq-private.json`，填入自己的 API 密钥，并将管理密码、OneBot 令牌和 NapCat 令牌分别替换为独立随机值。不要直接使用示例占位符。可以在本机生成随机值：
+
+```powershell
+py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+初始化后启动：
+
+```powershell
+.\.venv\Scripts\python.exe scripts/configure.py
+.\scripts\manage.ps1 -Action Start
+```
+
+等待管理面板可访问后，初始化公开社区配置与平台命令权限：
+
+```powershell
+.\.venv\Scripts\python.exe scripts/prepare_public_profile.py
+```
+
+`configure.py` 用于首次初始化，会写入初始模型、平台、人设和插件设置。日常应用名单使用下方入口；单独更新本项目记忆策略使用 `scripts/apply_memory_policy.py`，执行前停止服务，完成后重新启动。
+
+## 使用
+
+| 入口 | 地址或文件 |
+| --- | --- |
+| 管理与本地聊天 | http://127.0.0.1:6185 |
+| QQ 扫码登录 | http://127.0.0.1:6099 |
+| 本机登录信息 | `data/登录信息.txt` |
+| 隐藏启动 | `启动cuteQ.vbs` |
+| 隐藏停止 | `停止cuteQ.vbs` |
+| 应用 QQ 名单 | `应用聊天名单.vbs` |
+
+完成 QQ 扫码后，编辑 `data/cuteq-access.json`：
+
+```json
+{
+  "private_qq": ["123456789"],
+  "group_qq": ["987654321"],
+  "admin_qq": ["123456789"]
+}
+```
+
+数字仅为格式示例，请替换成自己的账号和群号，保留字符串双引号。名单为空时拒绝全部 QQ 聊天；管理员也必须在对应聊天名单内。保存后双击“应用聊天名单.vbs”。
+
+私聊直接发消息，群聊可以 @角色，也会少量随机接话。默认随机接话概率为 6%；群聊空闲时的定时破冰关闭。私聊主动消息的间隔为 2–8 小时，23:00–08:00 安静，连续一次未获回复后暂停；可在主动聊天插件中关闭。
+
+更多操作见 [使用说明](使用说明.md)。
+
+## 记忆与上下文
+
+记忆策略位于 [config/memory-policy.json](config/memory-policy.json)：
+
+- QQ 来信原文不因总结完成或经过 30 天自动删除，派生记忆的自动衰减关闭。
+- 每累计约 8 条事件或达到阶段间隔时整理记忆；保留原文以便核对总结遗漏的细节。
+- 自动召回与按需原文查询配合，区别不同人物、不同事件以及后续更正。
+- 工作上下文预算为 800000 个估算 token，框架在约 656000 时触发整理，近期约 25% 的上下文按完整轮次保留。
+- 私聊原文按账号和窗口隔离；小黑盒公开讨论使用独立配置，不加载 QQ 私聊记忆工具。
+
+上下文整理是有损的，本地原文提供补查依据。检索和模型理解仍可能遗漏或混淆内容；单条超大输入也不能突破模型服务的硬性上下文限制。具体实现边界与验证方法见 [验证说明](docs/validation.md)。
+
+原文适配器保存可见的文字消息，使用底层接口的 256 KiB 单条正文边界；图片、语音和附件不作为完整媒体档案保存。角色回复沿用 MemoryCompanion 的原有采集方式。
+
+## 社区平台
+
+- **QQ 空间**：支持生成待审核草稿和发布说说。自动发布与自动评论默认关闭，草稿不自动取任意群聊记录作为素材。
+- **B 站**：在插件详情中打开 BiliBot 控制中心扫码，也可由管理员使用 `/bili登录` 和 `/bili确认`。评论、动态和其他自动账号行为需要分别启用。
+- **小黑盒**：在插件管理页扫码，并为 `cuteq_xiaoheihe` 适配器绑定账号档案。默认禁用适配器并保留模拟运行，可先核对生成内容再开放真实发送。
+
+空间和 B 站的聊天命令仅管理员可用。不同平台沿用统一基础人设，但不自动全量共享私人记忆，也未实现所有平台活动的统一回忆。账号登录、内容发送和实际可见性需要逐个平台核对。
+
+## 数据与隐私
+
+`data/` 包含密钥、密码、平台登录状态、名单、聊天和记忆，不应公开提交。`logs/` 可能含聊天或管理信息；两者均已加入 Git 忽略列表。
+
+本地保存不等于本地推理：被选入上下文的记忆片段会随请求发给配置的模型服务。迁移到服务器后，数据库位于服务器。长期保留会增加磁盘占用；需要清除某段经历时，应同时检查原文与派生记忆。
+
+## 开发与验证
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe scripts/verify.py
+```
+
+`evaluate_memory.py`、`verify_context.py` 和 `verify_pipeline.py` 会调用真实模型并消耗 API 额度，使用虚构资料和隔离数据库。测试记录、对照方法和覆盖范围放在 [docs/validation.md](docs/validation.md)。
+
+## 上游项目
 
 - [AstrBot](https://github.com/AstrBotDevs/AstrBot)
 - [NapCatQQ](https://github.com/NapNeko/NapCatQQ)
-- [陪伴记忆插件](https://github.com/menglimi/astrbot_plugin_memory_companion)
+- [MemoryCompanion](https://github.com/menglimi/astrbot_plugin_memory_companion)
 - [主动聊天插件](https://github.com/Pancakes-Labs/astrbot_plugin_proactive_chat)
 - [QQ 空间插件](https://github.com/Zhalslar/astrbot_plugin_qzone)
 - [B 站 AI Bot](https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot)
 - [小黑盒适配器](https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter)
-- [小黑盒接口契约与验证范围](https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter/blob/main/docs/xiaoheihe-api-contract.md)

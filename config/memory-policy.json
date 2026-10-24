@@ -1,0 +1,45 @@
+{
+  "context_budget_tokens": 800000,
+  "compression": {
+    "max_turns": -1,
+    "overflow_strategy": "llm_compress",
+    "keep_recent_ratio": 0.25,
+    "fallback_max_tokens": 800000
+  },
+  "memory": {
+    "memory_summary": {
+      "min_events": 8,
+      "trigger_event_count": 8,
+      "trigger_interval_minutes": 15,
+      "max_events_per_summary": 16,
+      "max_input_chars": 16000,
+      "max_summary_chars": 2400
+    },
+    "memory_injection": {
+      "top_k": 8,
+      "max_chars": 12000,
+      "max_item_chars": 1200
+    },
+    "memory_tools": {
+      "enable_source_query_v2": true
+    },
+    "memory_reconstruction": {
+      "max_steps": 6,
+      "per_step_limit": 8,
+      "candidate_scan_limit": 192
+    },
+    "maintenance": {
+      "retention_raw_event_days": 0,
+      "retention_summarized_timeline_days": 0,
+      "retention_unsummarized_timeline_days": 0,
+      "memory_decay_enabled": false
+    },
+    "conversation_memory_advanced": {
+      "cross_window_private_to_group_enabled": false
+    },
+    "visibility": {
+      "enable_acl_rules": true,
+      "allow_group_public_in_private": false
+    }
+  }
+}

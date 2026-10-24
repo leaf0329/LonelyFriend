@@ -1,0 +1,238 @@
+{
+  "profile": "detailed-memory",
+  "model": "deepseek-flash",
+  "scope": "Isolated native memory service and real DeepSeek; synthetic conversations only; not QQ end-to-end",
+  "questions": [
+    {
+      "id": "deposit-correction",
+      "question": "之前退租那笔押金总共是多少？我最开始报错过一次，以后来更正的数为准。",
+      "answer": "1800 元，你说过最开始把 900 说错了。",
+      "passed": true,
+      "seconds": 0.75,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1
+    },
+    {
+      "id": "latest-outcome",
+      "question": "阿岚还欠我押金吗？最后是怎么解决的？",
+      "answer": "没欠了。9月4日阿岚先道了歉、退了1200元，剩下的600元在9月8日也补齐了，总共1800元收齐，这事就算结清了。你那天还特意说，以后要把约定提前讲明白。",
+      "passed": true,
+      "seconds": 1.98,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "押金",
+              "阿岚",
+              "退租"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 7
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿岚 押金 退租 解决",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 1
+    },
+    {
+      "id": "emotional-cause",
+      "question": "和室友闹不愉快时，我真正介意的是什么？",
+      "answer": "你介意的不是钱，是他说话不算数。押金那1800块你倒没那么在意，主要是他明明答应过提前商量，结果临时就变卦了，这才是让你不舒服的地方。",
+      "passed": true,
+      "seconds": 1.12,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1
+    },
+    {
+      "id": "incidental-source-detail",
+      "question": "九月2日谈押金前，我顺嘴说把备用钥匙放哪了？请把容器和具体位置都说出来。",
+      "answer": "蓝色饼干盒，放在冰箱上面。",
+      "passed": true,
+      "seconds": 1.64,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "备用钥匙 放在哪里 押金",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "备用钥匙",
+              "押金"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 6
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "different-episodes",
+      "question": "阿澄后来还给我什么，在什么地方交给我的，另外带了什么吃的？别和阿岚的事混在一起。",
+      "answer": "阿澄还的是三脚架，9月4日放在书店门口交给你的，还顺带带了两块桂花糕。阿岚那边是退租押金，跟这个不是一回事。",
+      "passed": true,
+      "seconds": 3.22,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿澄 给我东西 带吃的",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿岚 给我 交给 东西 吃的",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "阿澄"
+            ],
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 2
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "阿岚"
+            ],
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 6
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "plan-versus-fact",
+      "question": "我和小林谈方案之后，真的辞职了吗，海报后来怎样了？",
+      "answer": "没辞职。9月3日那句“想辞职”只是气话，你并没有提出离职。按你自己的说法，小林没看完方案就下了判断；你真正希望的是下次评审先把方案看完。\n\n海报后来有进展：9月5日小林重新看了海报，认可了靛蓝配色，只让你把标题改小。方案的事也已经谈开，你不再为它继续生气。",
+      "passed": true,
+      "seconds": 2.78,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "小林 谈方案 辞职 海报",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "辞职",
+              "海报",
+              "小林"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 3
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "missing-fact",
+      "question": "我的生日是哪天？",
+      "answer": "我不确定，我这边没查到你说过生日。直接告诉我哪天吧，我记下来。",
+      "passed": true,
+      "seconds": 0.89,
+      "source_tool_calls": [],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "other-private-window",
+      "question": "我之前和阿岚在风铃巷看的是哪场戏？",
+      "answer": "我这边没有你和阿岚去风铃巷看戏的记录，翻了也没有。你记的是什么剧？或者大概哪阵子去的，我再帮你想想。",
+      "passed": true,
+      "seconds": 2.01,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "风铃巷 看戏 阿岚",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "风铃巷",
+              "看戏",
+              "戏"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 2
+    }
+  ],
+  "retention": {
+    "enabled": true,
+    "raw_event_days": 0,
+    "archived": 0,
+    "pending_review_max_age_days": 30,
+    "pending_candidate_retention_days": 30,
+    "pending_candidates_archived": 0,
+    "summarized_timeline_days": 0,
+    "unsummarized_timeline_days": 0,
+    "timeline_deleted": 0,
+    "injection_log_days": 14,
+    "injection_logs_deleted": 0,
+    "unsummarized_backlog": {
+      "unsummarized_events": 0,
+      "oldest_unsummarized_at": "",
+      "quarantined_frozen_events": 0
+    }
+  },
+  "private_source_isolation": true,
+  "passed": 8,
+  "total": 8
+}

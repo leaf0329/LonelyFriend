@@ -17,6 +17,15 @@
     "distribution": "Gyan essentials build",
     "source": "https://www.gyan.dev/ffmpeg/builds/"
   },
+  "project_plugins": [
+    {
+      "name": "astrbot_plugin_lonelyfriend_memory",
+      "version": "0.1.0",
+      "source": "plugins/astrbot_plugin_lonelyfriend_memory",
+      "astrbot_version": "4.29.1",
+      "memory_companion_version": "2.3.1"
+    }
+  ],
   "plugins": [
     {
       "name": "astrbot_plugin_qzone",

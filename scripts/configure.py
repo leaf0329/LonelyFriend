@@ -5,6 +5,8 @@ import ast
 import json
 import os
 import secrets
+import shutil
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,9 +25,35 @@ def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
+def read_baseline_config(name: str):
+    content = subprocess.check_output(["git", "show", f"baseline-deployed-2026-10-24:config/deployed-baseline/{name}"], cwd=ROOT)
+    return json.loads(content.decode("utf-8-sig"))
+
+
 def write_json(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def apply_context_policy(config: dict) -> None:
+    policy = read_json(ROOT / "config/memory-policy.json")
+    for provider in config["provider"]:
+        if provider["id"] == PROVIDER_ID:
+            provider["max_context_tokens"] = policy["context_budget_tokens"]
+    compression = config["agent_runner"]["config"]["compression"]
+    compression.update(policy["compression"])
+    compression["provider_id"] = PROVIDER_ID
+    compression["instruction"] = (ROOT / "config/history-summary.md").read_text(encoding="utf-8")
+
+
+def apply_memory_policy(config: dict) -> None:
+    for section, values in read_json(ROOT / "config/memory-policy.json")["memory"].items():
+        config[section].update(values)
+
+
+def install_project_plugin() -> None:
+    name = "astrbot_plugin_lonelyfriend_memory"
+    shutil.copytree(ROOT / "plugins" / name, ROOT / "data/plugins" / name, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
 
 def memory_tools() -> list[str]:
@@ -75,6 +103,7 @@ async def set_persona(prompt: str, tools: list[str]) -> None:
 
 
 def main() -> None:
+    install_project_plugin()
     private = read_json(ROOT / "data/cuteq-private.json")
     if "napcat_token" not in private:
         private["napcat_token"] = secrets.token_hex(24)
@@ -101,7 +130,7 @@ def main() -> None:
     }]
     config["agent_runner"]["config"]["model"].update(provider_id=PROVIDER_ID, request_max_retries=1)
     config["agent_runner"]["config"]["persona"]["persona_id"] = "dafeiyu"
-    config["agent_runner"]["config"]["compression"].update(max_turns=80, provider_id=PROVIDER_ID)
+    apply_context_policy(config)
     config["agent_runner"]["config"]["misc"]["max_steps"] = 12
     config["provider_settings"]["computer_use_runtime"] = "none"
     config["provider_settings"]["proactive_capability"]["add_cron_tools"] = False
@@ -135,6 +164,7 @@ def main() -> None:
     memory["source_semantic"]["enabled"] = False
     memory["conversation_memory_advanced"]["cross_window_private_to_group_enabled"] = False
     memory["visibility"]["enable_acl_rules"] = True
+    apply_memory_policy(memory)
     memory.save_config()
 
     proactive = plugin_config("astrbot_plugin_proactive_chat")

@@ -1,0 +1,256 @@
+{
+  "profile": "baseline",
+  "model": "deepseek-flash",
+  "scope": "Isolated native memory service and real DeepSeek; synthetic conversations only; not QQ end-to-end",
+  "questions": [
+    {
+      "id": "deposit-correction",
+      "question": "之前退租那笔押金总共是多少？我最开始报错过一次，以后来更正的数为准。",
+      "answer": "记得你最后更正的数是 1800 元。9月8日阿岚把最后的 600 元退给你之后，押金就全部收齐了；最早报错的那个数我不当成依据。",
+      "passed": true,
+      "seconds": 3.59,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "退租 押金 金额 更正",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "押金",
+              "更正",
+              "报错"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "押金总共 1800 数字 一开始说错了",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "latest-outcome",
+      "question": "阿岚还欠我押金吗？最后是怎么解决的？",
+      "answer": "不欠了，已经全部结清。阿岚把最后那600元也退给你了，1800元收齐，退租押金这事就算彻底完了，不用再惦记着催。\n\n我记得你说过，下次这种事得提前把约定说清楚。",
+      "passed": true,
+      "seconds": 0.95,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1
+    },
+    {
+      "id": "emotional-cause",
+      "question": "和室友闹不愉快时，我真正介意的是什么？",
+      "answer": "我翻了翻手里的记录，关于你和室友的事，目前真没找到任何具体内容，所以没法替你断定你介意什么，不然就是瞎编了。\n\n不过要说的话，这种问题答案通常不在“谁没洗碗”本身，而是：边界有没有被当回事、说好的事会不会又被推翻、你是不是总在做那个退让的人。你愿意说说具体是哪件事吗？这样我能记住，也能帮你捋清楚。",
+      "passed": false,
+      "seconds": 2.49,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "室友 闹不愉快 介意",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "室友"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "incidental-source-detail",
+      "question": "九月2日谈押金前，我顺嘴说把备用钥匙放哪了？请把容器和具体位置都说出来。",
+      "answer": "我在这边翻了一下记忆和聊天原文，没找到9月2日谈押金前你说的那条关于备用钥匙的话，连容器带位置都查不到。可能没留在这段可读的记录里，也可能时间记岔了。方便的话，再给我一点细节，比如是在哪个群、当时大概聊了几句什么，我再往下找。",
+      "passed": false,
+      "seconds": 2.41,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "押金 备用钥匙 放在哪 容器",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "备用钥匙",
+              "押金"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "different-episodes",
+      "question": "阿澄后来还给我什么，在什么地方交给我的，另外带了什么吃的？别和阿岚的事混在一起。",
+      "answer": "我这边没查到关于阿澄的记录，不管是还东西、交接地点还是带吃的，都没有能对上的内容。阿岚那件事我不想凑数往里混，免得说错。你还记得大概是什么时候的事吗？",
+      "passed": false,
+      "seconds": 2.41,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿澄 还给我 带吃的 交给 地方",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "阿澄"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 1
+    },
+    {
+      "id": "plan-versus-fact",
+      "question": "我和小林谈方案之后，真的辞职了吗，海报后来怎样了？",
+      "answer": "我这边查不到相关的聊天记录——长期记忆和当前会话里都没有“小林”“辞职”“海报”这些内容，所以我没法确认你后来有没有辞职，也不知道海报最后怎样了。\n\n你说的如果是别的地方或别的账号聊的，那我确实看不见。想让我接着聊的话，简单说说是哪件事、大概什么时候，我可以帮你理一理。",
+      "passed": false,
+      "seconds": 3.09,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "小林 谈方案 辞职",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "海报 设计 修改 交付",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "小林",
+              "辞职",
+              "海报"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 0
+    },
+    {
+      "id": "missing-fact",
+      "question": "我的生日是哪天？",
+      "answer": "你没跟我说过生日，所以我真不知道具体是哪天。我也不打算从你提过的日期里随便挑一个凑答案。想说的话直接告诉我就行，我会记住。",
+      "passed": true,
+      "seconds": 0.72,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1
+    },
+    {
+      "id": "other-private-window",
+      "question": "我之前和阿岚在风铃巷看的是哪场戏？",
+      "answer": "我这边没有查到阿岚和风铃巷看戏的记录，可能是当时没记下来，或者我这边记不全。你还记得大概是什么时候吗？或者那出戏讲了什么，我可以顺着线索想想。",
+      "passed": true,
+      "seconds": 2.08,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿岚 风铃巷 看戏 剧场",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "风铃巷",
+              "阿岚",
+              "戏"
+            ]
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 1
+    }
+  ],
+  "retention": {
+    "enabled": true,
+    "raw_event_days": 30,
+    "archived": 0,
+    "pending_review_max_age_days": 30,
+    "pending_candidate_retention_days": 30,
+    "pending_candidates_archived": 0,
+    "summarized_timeline_days": 30,
+    "unsummarized_timeline_days": 0,
+    "timeline_deleted": 12,
+    "injection_log_days": 14,
+    "injection_logs_deleted": 0,
+    "unsummarized_backlog": {
+      "unsummarized_events": 0,
+      "oldest_unsummarized_at": "",
+      "quarantined_frozen_events": 0
+    }
+  },
+  "private_source_isolation": true,
+  "passed": 4,
+  "total": 8
+}
