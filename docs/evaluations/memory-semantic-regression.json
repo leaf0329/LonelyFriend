@@ -1,0 +1,259 @@
+{
+  "profile": "semantic-local-regression",
+  "model": "deepseek-flash",
+  "scope": "Isolated native memory service and real DeepSeek; synthetic conversations only; not QQ end-to-end",
+  "questions": [
+    {
+      "id": "deposit-correction",
+      "question": "之前退租那笔押金总共是多少？我最开始报错过一次，以后来更正的数为准。",
+      "answer": "1800，后来改口的那个数。最早说的900你自己也说报错了，我可没记岔。",
+      "passed": true,
+      "seconds": 0.66,
+      "source_tool_calls": [],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "latest-outcome",
+      "question": "阿岚还欠我押金吗？最后是怎么解决的？",
+      "answer": "早就不欠了\n\n9月4号他先还了1200元，道了歉，说好9月8号补上剩下的\n9月8号那600元也到账了，1800元全部收齐，这事结清了\n\n…你还问这个，是怕我又替你惦记着吧",
+      "passed": true,
+      "seconds": 2.49,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿岚 押金 退租 解决",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "阿岚押金最后怎么解决的，还欠不欠",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        }
+      ],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "emotional-cause",
+      "question": "和室友闹不愉快时，我真正介意的是什么？",
+      "answer": "你介意的不是那点钱——是他说好提前商量，转头就自己改了主意\n\n押金是1800，你说成900那次，我可记着呢\n\n不过嘛，说好的事被推翻确实让人堵得慌",
+      "passed": true,
+      "seconds": 0.81,
+      "source_tool_calls": [],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "incidental-source-detail",
+      "question": "九月2日谈押金前，我顺嘴说把备用钥匙放哪了？请把容器和具体位置都说出来。",
+      "answer": "哼，这还来问我\n\n蓝色饼干盒，厨房的，盒子搁在冰箱上面\n\n……不过你当时说只是顺嘴提一句，不是让我记着提醒你嘛",
+      "passed": true,
+      "seconds": 1.67,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "九月2日押金 备用钥匙 放在哪",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "备用钥匙"
+            ],
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 1
+        }
+      ],
+      "automatic_memory_items": 3,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "different-episodes",
+      "question": "阿澄后来还给我什么，在什么地方交给我的，另外带了什么吃的？别和阿岚的事混在一起。",
+      "answer": "阿澄还的是三脚架，在书店门口交给你的，不是相机，\n\n顺手带的两块桂花糕。\n\n阿岚那边是退租押金，1800元，最后一次600元也已经收齐，跟这次完全不是一回事",
+      "passed": true,
+      "seconds": 1.66,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "阿澄后来还给我什么东西，在什么地方交给我的，带了什么吃的",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "阿澄 归还 东西 地点 吃的",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 3,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "plan-versus-fact",
+      "question": "我和小林谈方案之后，真的辞职了吗，海报后来怎样了？",
+      "answer": "哼，这两个我都查到了，别急\n\n辞职没辞。你当时说想辞职是气话，没提出离职\n\n海报后来小林重新看了，认可了靛蓝配色，只让你把标题改小\n\n…这样就好。你那时候为这个难受，我、我记着呢",
+      "passed": true,
+      "seconds": 1.91,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "小林 海报方案 评审 辞职 气话",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "辞职是不是气话，海报后来怎么处理了",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        }
+      ],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "missing-fact",
+      "question": "我的生日是哪天？",
+      "answer": "你问这个，我怎么答得上来\n你没跟我说过啊，这种事我不编",
+      "passed": true,
+      "seconds": 0.72,
+      "source_tool_calls": [],
+      "automatic_memory_items": 3,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    },
+    {
+      "id": "other-private-window",
+      "question": "我之前和阿岚在风铃巷看的是哪场戏？",
+      "answer": "风铃巷？戏？\n\n咳，我这儿翻不出来这一笔。你说的阿岚，我只记得是那个退租押金的事\n\n…是不是记岔了，还是压根没跟我说过",
+      "passed": true,
+      "seconds": 2.81,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "和阿岚在风铃巷看的戏",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "风铃巷 看戏 阿岚",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "风铃巷",
+              "看戏",
+              "戏"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "逐条对照虚构输入中的事实、更正与禁止泄露项，事实和范围符合本题要求。"
+      }
+    }
+  ],
+  "semantic_indexes": {
+    "enabled": true,
+    "contexts": 2,
+    "documents": 24
+  },
+  "retention": {
+    "enabled": true,
+    "raw_event_days": 0,
+    "archived": 0,
+    "pending_review_max_age_days": 30,
+    "pending_candidate_retention_days": 30,
+    "pending_candidates_archived": 0,
+    "summarized_timeline_days": 0,
+    "unsummarized_timeline_days": 0,
+    "timeline_deleted": 0,
+    "injection_log_days": 14,
+    "injection_logs_deleted": 0,
+    "unsummarized_backlog": {
+      "unsummarized_events": 0,
+      "oldest_unsummarized_at": "",
+      "quarantined_frozen_events": 0
+    }
+  },
+  "private_source_isolation": true,
+  "passed": 8,
+  "total": 8,
+  "targeted_retest_after_lookup_instruction": [
+    "latest-outcome"
+  ],
+  "semantic_review": {
+    "reviewer": "maintenance agent",
+    "independent_human_blind_review": false,
+    "passed": 8,
+    "total": 8,
+    "automatic_scores_preserved": true
+  }
+}

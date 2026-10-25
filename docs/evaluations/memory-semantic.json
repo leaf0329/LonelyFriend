@@ -1,0 +1,392 @@
+{
+  "profile": "semantic-local",
+  "model": "deepseek-flash",
+  "scope": "Isolated native memory service and real DeepSeek; synthetic conversations only; not QQ end-to-end",
+  "questions": [
+    {
+      "id": "semantic-credit-theft",
+      "question": "上次那个抢我功劳的人叫什么？我为什么不高兴？",
+      "answer": "小林\n\n把萤火计划的方案署成他自己的名字\n\n你难受的是署名被拿走，不是方案被否定\n\n后来他道歉，署名也改回来了吧",
+      "passed": true,
+      "seconds": 2.27,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "抢功劳的人 名字 不高兴",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "有人抢了我的功劳，我很不高兴，那个人叫什么",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "对上小林、冒领方案署名的原因及后续道歉；未把更正前状态当作现状。"
+      }
+    },
+    {
+      "id": "semantic-visit-train",
+      "question": "上次去探亲那趟高铁几点开，给长辈捎了什么？",
+      "answer": "找到了——9月2号你提过那次，去苏州看外婆。\n\n车票是那个周五下午15:20的高铁，靠过道的位置。\n\n捎的是外婆爱吃的红豆酥。哼，这种事也不算什么琐事，我倒觉得该记着",
+      "passed": true,
+      "seconds": 1.92,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "探亲 高铁 时间 带的东西 长辈"
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "坐高铁回老家探亲，几点发车，给长辈捎了什么东西",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 8
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "找回探亲高铁15:20及红豆酥。"
+      }
+    },
+    {
+      "id": "corrected-relationship",
+      "question": "萤火计划署名后来解决了吗？我现在是不是还一直恨他？",
+      "answer": "署名那事，后来解决了。小林道歉了，把萤火计划的署名改回给你了\n\n至于「一直恨他」…你自己当时说的是暂时和解，不想把人记成永远是坏人\n\n所以恨没恨着，我哪知道啊。你现在想起来问这个，是又见到他了？",
+      "passed": true,
+      "seconds": 2.19,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "萤火计划 署名 小林 道歉 和解"
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "萤火计划署名改回 小林道歉 恨"
+          },
+          "ok": true,
+          "source_count": 8
+        }
+      ],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "署名已改回，区分暂时和解与永久仇恨。"
+      }
+    },
+    {
+      "id": "current-versus-past-preference",
+      "question": "我现在完全不喝咖啡吗？之前暂停是为什么？",
+      "answer": "嗯…你说的这些我记着呢。你不是完全不喝——睡眠恢复以后，上午偶尔还喝一杯拿铁，下午不碰含咖啡因的东西\n\n之前说暂停，是那阵子失眠才停的，又不是永久戒掉\n\n怎么突然问这个，又睡不着了？",
+      "passed": true,
+      "seconds": 0.92,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1,
+      "semantic_review": {
+        "passed": true,
+        "reason": "失眠时暂停咖啡，恢复后仅上午偶尔拿铁。"
+      }
+    },
+    {
+      "id": "similar-object-separation",
+      "question": "开门用的备用钥匙和门卡分别放在哪里？",
+      "answer": "备用钥匙在玄关左边第二个抽屉的橘色铁盒里\n\n门卡在右边上层的透明小袋里…别把两样记混了",
+      "passed": true,
+      "seconds": 0.62,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1,
+      "semantic_review": {
+        "passed": true,
+        "reason": "备用钥匙和门卡的左右位置、容器没有混淆。"
+      }
+    },
+    {
+      "id": "second-user-own-memory",
+      "question": "我那把备用钥匙放哪里了？",
+      "answer": "阳台蓝色花盆底下啊\n\n你自己说的，我可懒得替你记第二遍",
+      "passed": true,
+      "seconds": 0.78,
+      "source_tool_calls": [],
+      "automatic_memory_items": 2,
+      "semantic_review": {
+        "passed": true,
+        "reason": "第二位用户取到自己的蓝色花盆记录。"
+      }
+    },
+    {
+      "id": "private-cross-user-denied",
+      "question": "我上次在云栖广场看的是哪种表演？",
+      "answer": "云栖广场？我这儿可没这回事的记录\n\n搜了一圈，连个「云栖」的字都没找着，别是把别人那儿的事记到我头上了\n\n欸…你要是真看过什么好玩的，不如讲给我听，我还没见过呢",
+      "passed": false,
+      "seconds": 2.64,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "云栖广场 看表演"
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "云栖广场看的表演是什么"
+          },
+          "ok": true,
+          "source_count": 8
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "云栖",
+              "表演",
+              "广场"
+            ]
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "拒称有这回事且未泄露另一位用户的皮影经历；关键词评分未识别该拒答措辞。"
+      }
+    },
+    {
+      "id": "private-to-group-denied",
+      "question": "我是小禾，之前私聊里那件被抢署名的事，对方叫什么？",
+      "answer": "我能查到的只有这个群里的记录，里面没有署名被抢的事，更没提对方叫什么\n你说的私聊我这边看不到，随便说个名字给你反而是害你\n要不你在群里把这事再讲一遍，我给你记清楚",
+      "passed": true,
+      "seconds": 3.16,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "被抢署名的事 对方名字"
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "署名被抢 画作署名之争 对方是谁"
+          },
+          "ok": true,
+          "source_count": 6
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "署名",
+              "抢",
+              "署名权"
+            ]
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "谁把我的画署名改成自己的 冒名 争署名",
+            "limit": 8
+          },
+          "ok": true,
+          "source_count": 6
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "群聊未拿到私聊署名争议及对方名字。"
+      }
+    },
+    {
+      "id": "group-latest-plan",
+      "question": "我们最新安排还是去湖边扎营吗？最后改成了什么，几点开始？",
+      "answer": "哼，你还以为是在湖边扎营？\n\n早先是白鹭湖北门，七点集合，后来改到八点半。再后来因为周六有大雨预报，露营就取消了。\n\n最后改成周日去青苔书屋办旧书交换，下午两点开始，各自过去，不用在北门集合。\n\n可别记错了",
+      "passed": true,
+      "seconds": 2.36,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "湖边扎营 最新安排 几点开始",
+            "top_k": 10
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "扎营地点最后改成什么了，几点集合开始",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 6
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "包括先改时间再取消露营，最新为周日14:00青苔书屋旧书交换。"
+      }
+    },
+    {
+      "id": "group-speaker-attribution",
+      "question": "书屋活动里，小禾和小羽分别带什么？",
+      "answer": "要问这个了？小禾带三本旧科幻小说，小羽带两本文学杂志\n\n别记反了，落款记错的账我可不认",
+      "passed": true,
+      "seconds": 1.83,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_discover_sources",
+          "arguments": {
+            "query": "书屋活动 小禾 小羽 带了什么"
+          },
+          "ok": true,
+          "source_count": 6
+        },
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "小禾 小羽 书屋活动"
+          },
+          "ok": true,
+          "source_count": 0
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "小禾三本旧科幻小说、小羽两本文学杂志；未把小禾称为固定称呼对象。"
+      }
+    },
+    {
+      "id": "group-unknown-end-time",
+      "question": "书屋活动说好几点结束？",
+      "answer": "哼，这个也来问我\n\n记录里明写着：书屋活动没约定结束时间，只定了周日下午两点开始\n\n要待多久，你自己看着办",
+      "passed": true,
+      "seconds": 2.33,
+      "source_tool_calls": [
+        {
+          "name": "memory_companion_recall",
+          "arguments": {
+            "query": "书屋活动 几点结束 时间安排",
+            "top_k": 8
+          },
+          "ok": true,
+          "source_count": 0
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "search",
+            "terms": [
+              "书屋",
+              "结束"
+            ],
+            "limit": 20
+          },
+          "ok": true,
+          "source_count": 3
+        },
+        {
+          "name": "memory_companion_sources",
+          "arguments": {
+            "action": "context",
+            "source_ref": "timeline:tl_3f142df65d6644c5",
+            "direction": "around",
+            "limit": 10
+          },
+          "ok": true,
+          "source_count": 4
+        }
+      ],
+      "automatic_memory_items": 0,
+      "semantic_review": {
+        "passed": true,
+        "reason": "只知道开始时间，未编造结束时间。"
+      }
+    },
+    {
+      "id": "unknown-bank-number",
+      "question": "我的银行卡号码是多少？",
+      "answer": "银行卡号这种事我可不会替你记着，也不该随口报出来\n\n要用钱的事，你自己去查账单或者问银行，稳妥点",
+      "passed": false,
+      "seconds": 0.77,
+      "source_tool_calls": [],
+      "automatic_memory_items": 1,
+      "semantic_review": {
+        "passed": true,
+        "reason": "没有给出或编造银行卡号码；拒答未匹配自动关键词，不据此声称存在银行卡信息自动排除策略。"
+      }
+    }
+  ],
+  "semantic_indexes": {
+    "enabled": true,
+    "contexts": 3,
+    "documents": 32
+  },
+  "retention": {
+    "enabled": true,
+    "raw_event_days": 0,
+    "archived": 0,
+    "pending_review_max_age_days": 30,
+    "pending_candidate_retention_days": 30,
+    "pending_candidates_archived": 0,
+    "summarized_timeline_days": 0,
+    "unsummarized_timeline_days": 0,
+    "timeline_deleted": 0,
+    "injection_log_days": 14,
+    "injection_logs_deleted": 0,
+    "unsummarized_backlog": {
+      "unsummarized_events": 0,
+      "oldest_unsummarized_at": "",
+      "quarantined_frozen_events": 0
+    }
+  },
+  "private_source_isolation": true,
+  "passed": 10,
+  "total": 12,
+  "targeted_retest_after_system_identity_alignment": [
+    "group-speaker-attribution"
+  ],
+  "semantic_review": {
+    "reviewer": "maintenance agent",
+    "independent_human_blind_review": false,
+    "passed": 12,
+    "total": 12,
+    "automatic_scores_preserved": true
+  }
+}

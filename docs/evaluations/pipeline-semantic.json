@@ -1,0 +1,22 @@
+{
+  "isolated_astrbot": true,
+  "real_deepseek": true,
+  "local_onebot_transport": true,
+  "external_qq_account_used": false,
+  "original_characters": 6549,
+  "full_original_stored": true,
+  "new_conversation_recalled_original_tail": true,
+  "paraphrased_original_recalled": true,
+  "owner_address_preserved": true,
+  "bracketed_actions_absent": true,
+  "group_memory_after_new_conversation": true,
+  "private_memory_not_exposed_to_group": true,
+  "unapproved_private_message_not_archived_or_answered": true,
+  "reply": "青柚回声",
+  "semantic_reply": "赵衡",
+  "group_reply": "换书啊……青苔书屋，周日下午两点\n\n这话是谁说的来着，我得看着那头像才认得清",
+  "verified_on": "2026-10-26",
+  "shared_group_reset_requires_administrator": true,
+  "synthetic_conversations_only": true,
+  "scope": "Real AstrBot and DeepSeek with local OneBot transport; no external QQ messages were sent."
+}

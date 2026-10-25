@@ -6,7 +6,40 @@
     "keep_recent_ratio": 0.25,
     "fallback_max_tokens": 800000
   },
+  "embedding_provider": {
+    "id": "cuteq-local-embedding",
+    "type": "lonelyfriend_local_embedding",
+    "provider_type": "embedding",
+    "enable": true,
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "embedding_dimensions": 512,
+    "embedding_cache_dir": "runtime/models"
+  },
   "memory": {
+    "retrieval": {
+      "embedding_enabled": true,
+      "embedding_provider_id": "cuteq-local-embedding"
+    },
+    "retrieval_advanced": {
+      "embedding_score_threshold": 0.4,
+      "embedding_timeout_ms": 8000,
+      "embedding_background_concurrency": 1,
+      "query_vector_cache_ttl_seconds": 120,
+      "relax_keyword_min_hits": true
+    },
+    "source_semantic": {
+      "enabled": true,
+      "provider_id": "cuteq-local-embedding",
+      "model_revision": "Qdrant/bge-small-zh-v1.5@46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59:mean320-overlap48-v1",
+      "dimensions": 512,
+      "history_backfill_enabled": true,
+      "processing_version": "lonelyfriend-full-capture-json-v2",
+      "fragment_target_chars": 320,
+      "fragment_overlap_chars": 48,
+      "window_max_chars": 960,
+      "sources_per_run": 4,
+      "provider_calls_per_run": 32
+    },
     "memory_summary": {
       "min_events": 8,
       "trigger_event_count": 8,

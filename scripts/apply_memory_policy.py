@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from configure import ROOT, apply_context_policy, apply_memory_policy, install_project_plugin, load_persona_prompt, memory_tools, read_json, set_persona, write_json
+from configure import ROOT, apply_context_policy, apply_memory_policy, configure_local_embedding, install_project_plugin, load_persona_prompt, memory_tools, read_json, set_persona, write_json
 
 
 def main() -> None:
@@ -15,6 +15,7 @@ def main() -> None:
     for path in configs:
         value = read_json(path)
         apply_context_policy(value)
+        configure_local_embedding(value)
         write_json(path, value)
     memory_path = ROOT / "data/config/astrbot_plugin_memory_companion_config.json"
     memory = read_json(memory_path)

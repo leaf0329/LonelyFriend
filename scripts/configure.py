@@ -50,11 +50,17 @@ def apply_context_policy(config: dict) -> None:
     compression.update(policy["compression"])
     compression["provider_id"] = PROVIDER_ID
     compression["instruction"] = (ROOT / "config/history-summary.md").read_text(encoding="utf-8")
+    config["provider_settings"]["buffer_intermediate_messages"] = True
 
 
 def apply_memory_policy(config: dict) -> None:
     for section, values in read_json(ROOT / "config/memory-policy.json")["memory"].items():
         config[section].update(values)
+
+
+def configure_local_embedding(config: dict) -> None:
+    provider = read_json(ROOT / "config/memory-policy.json")["embedding_provider"]
+    config["provider"] = [item for item in config["provider"] if item["id"] != provider["id"]] + [provider]
 
 
 def install_project_plugin() -> None:
@@ -137,6 +143,7 @@ def main() -> None:
     config["agent_runner"]["config"]["model"].update(provider_id=PROVIDER_ID, request_max_retries=1)
     config["agent_runner"]["config"]["persona"]["persona_id"] = "dafeiyu"
     apply_context_policy(config)
+    configure_local_embedding(config)
     config["agent_runner"]["config"]["misc"]["max_steps"] = 12
     config["provider_settings"]["computer_use_runtime"] = "none"
     config["provider_settings"]["identifier"] = True
@@ -167,8 +174,6 @@ def main() -> None:
     memory["memory_summary"]["provider_id"] = PROVIDER_ID
     memory["memory_summary"]["private_provider_id"] = PROVIDER_ID
     memory["memory_summary"]["group_provider_id"] = PROVIDER_ID
-    memory["retrieval"]["embedding_enabled"] = False
-    memory["source_semantic"]["enabled"] = False
     memory["conversation_memory_advanced"]["cross_window_private_to_group_enabled"] = False
     memory["visibility"]["enable_acl_rules"] = True
     apply_memory_policy(memory)

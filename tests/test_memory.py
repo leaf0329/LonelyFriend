@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import sys
 import tempfile
 import time
@@ -17,9 +16,8 @@ from astrbot.core.agent.context.config import ContextConfig
 from astrbot.core.agent.context.manager import ContextManager
 from astrbot.core.agent.message import Message
 
-spec = importlib.util.spec_from_file_location("lonelyfriend_capture_test", ROOT / "plugins/astrbot_plugin_lonelyfriend_memory/main.py")
-capture_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(capture_module)
+sys.path.insert(0, str(ROOT))
+from plugins.astrbot_plugin_lonelyfriend_memory import main as capture_module
 
 
 class OriginalMemoryTests(unittest.IsolatedAsyncioTestCase):

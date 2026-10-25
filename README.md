@@ -91,6 +91,7 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 初始化后启动：
 
 ```powershell
+.\.venv\Scripts\python.exe scripts/prepare_semantic_model.py
 .\.venv\Scripts\python.exe scripts/configure.py
 .\scripts\manage.ps1 -Action Start
 ```
@@ -104,6 +105,8 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 `configure.py` 用于首次初始化，会写入初始模型、平台、人设和插件设置。日常应用名单使用下方入口；单独更新本项目记忆策略使用 `scripts/apply_memory_policy.py`，执行前停止服务，完成后重新启动。
 
 本机专用角色卡可保存在 `data/persona.md`，初始化和应用记忆策略时优先使用这份文件；未配置时使用 `config/persona.md`。角色卡中的私人称呼与账号信息随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
+
+指定账号的固定称呼可通过本机 `data/persona-binding.json` 设置，字段为字符串 `owner_qq` 和 `owner_address`。绑定依据平台发送者身份，消息正文中的自报身份不会改变绑定；修改后重启服务。该文件与角色卡一样不提交到 Git。
 
 ## 使用
 
@@ -136,13 +139,17 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 记忆策略位于 [config/memory-policy.json](config/memory-policy.json)：
 
-- QQ 来信原文不因总结完成或经过 30 天自动删除，派生记忆的自动衰减关闭。
+- QQ 来信原文不因总结完成或经过 30 天自动删除，自动归档与删除关闭；召回排序仍使用原生分类型指数衰减和使用强化。
 - 每累计约 8 条事件或达到阶段间隔时整理记忆；保留原文以便核对总结遗漏的细节。
 - 自动召回与按需原文查询配合，区别不同人物、不同事件以及后续更正。
+- 本地 BGE 中文模型为结构化记忆与原文建立语义索引，与关键词、时间和权限过滤共同使用。首次下载模型后，Embedding 在本机 CPU 上运行，无需额外的 Embedding API 密钥。
+- 对原生策略识别出的历史追问，会在首次回答前补入有权限的原文候选，减少模型只口头承诺查找却没有调用工具的情况；普通闲聊不强制进行原文回忆。
 - 工作上下文预算为 800000 个估算 token，框架在约 656000 时触发整理，近期约 25% 的上下文按完整轮次保留。
 - 私聊原文按账号和窗口隔离；小黑盒公开讨论使用独立配置，不加载 QQ 私聊记忆工具。
 
 上下文整理是有损的，本地原文提供补查依据。检索和模型理解仍可能遗漏或混淆内容；单条超大输入也不能突破模型服务的硬性上下文限制。具体实现边界与验证方法见 [验证说明](docs/validation.md)。
+
+升级现有安装时，先安装依赖、停止服务，再依次运行 `prepare_semantic_model.py`、`apply_memory_policy.py`、`index_memory.py`，最后重新启动。索引维护保持原有账号、人格和窗口归属，信息不足的旧记录不会被自动绑定到其他身份。设计与取舍见 [记忆设计](docs/memory-design.md)。
 
 原文适配器保存可见的文字消息，使用底层接口的 256 KiB 单条正文边界；图片、语音和附件不作为完整媒体档案保存。角色回复沿用 MemoryCompanion 的原有采集方式。
 
