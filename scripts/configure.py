@@ -35,6 +35,12 @@ def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def load_persona_prompt() -> str:
+    local_persona = ROOT / "data/persona.md"
+    source = local_persona if local_persona.is_file() else ROOT / "config/persona.md"
+    return source.read_text(encoding="utf-8-sig")
+
+
 def apply_context_policy(config: dict) -> None:
     policy = read_json(ROOT / "config/memory-policy.json")
     for provider in config["provider"]:
@@ -133,6 +139,7 @@ def main() -> None:
     apply_context_policy(config)
     config["agent_runner"]["config"]["misc"]["max_steps"] = 12
     config["provider_settings"]["computer_use_runtime"] = "none"
+    config["provider_settings"]["identifier"] = True
     config["provider_settings"]["proactive_capability"]["add_cron_tools"] = False
     config["provider_settings"]["default_image_caption_provider_id"] = PROVIDER_ID
     config["provider_ltm_settings"].update(group_message_history_enable=True, group_message_history_max_cnt=150)
@@ -152,7 +159,7 @@ def main() -> None:
     apply_access(config, access)
     config.save_config()
 
-    prompt = (ROOT / "config/persona.md").read_text(encoding="utf-8")
+    prompt = load_persona_prompt()
     tools = memory_tools()
     asyncio.run(set_persona(prompt, tools))
 

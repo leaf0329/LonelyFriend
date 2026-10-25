@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from configure import ROOT, apply_context_policy, apply_memory_policy, install_project_plugin, memory_tools, read_json, set_persona, write_json
+from configure import ROOT, apply_context_policy, apply_memory_policy, install_project_plugin, load_persona_prompt, memory_tools, read_json, set_persona, write_json
 
 
 def main() -> None:
@@ -20,7 +20,7 @@ def main() -> None:
     memory = read_json(memory_path)
     apply_memory_policy(memory)
     write_json(memory_path, memory)
-    asyncio.run(set_persona((ROOT / "config/persona.md").read_text(encoding="utf-8"), memory_tools()))
+    asyncio.run(set_persona(load_persona_prompt(), memory_tools()))
     print("Applied the detailed-memory policy; account credentials and chat allowlists were preserved.")
 
 

@@ -103,6 +103,8 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 `configure.py` 用于首次初始化，会写入初始模型、平台、人设和插件设置。日常应用名单使用下方入口；单独更新本项目记忆策略使用 `scripts/apply_memory_policy.py`，执行前停止服务，完成后重新启动。
 
+本机专用角色卡可保存在 `data/persona.md`，初始化和应用记忆策略时优先使用这份文件；未配置时使用 `config/persona.md`。角色卡中的私人称呼与账号信息随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
+
 ## 使用
 
 | 入口 | 地址或文件 |
