@@ -1,0 +1,8 @@
+{
+  "enable": true,
+  "only_llm_result": true,
+  "split_mode": "regex",
+  "regex": "\\A(?=.*^[ \\t]*(?:`{3,}|~{3,})).+\\Z|.+?(?=\\r?\\n[ \\t]*\\r?\\n|\\Z)",
+  "words_count_threshold": 1500,
+  "content_cleanup_rule": ""
+}

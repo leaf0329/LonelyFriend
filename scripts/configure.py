@@ -61,6 +61,10 @@ def apply_memory_policy(config: dict) -> None:
         config[section].update(values)
 
 
+def apply_reply_policy(config: dict) -> None:
+    config["platform_settings"]["segmented_reply"].update(read_json(ROOT / "config/reply-policy.json"))
+
+
 def configure_local_embedding(config: dict) -> None:
     provider = read_json(ROOT / "config/memory-policy.json")["embedding_provider"]
     config["provider"] = [item for item in config["provider"] if item["id"] != provider["id"]] + [provider]
@@ -180,7 +184,7 @@ def main() -> None:
         no_permission_reply=False, ignore_bot_self_message=True,
     )
     config["platform_settings"]["rate_limit"].update(time=60, count=8, strategy="discard")
-    config["platform_settings"]["segmented_reply"]["enable"] = False
+    apply_reply_policy(config)
     config["platform"] = [{
         "id": QQ_PLATFORM_ID, "type": "aiocqhttp", "enable": True,
         "ws_reverse_host": "127.0.0.1", "ws_reverse_port": 6199,

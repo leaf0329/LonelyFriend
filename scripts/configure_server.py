@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import json
 
-from configure import ROOT, apply_access, apply_qzone_patch, read_json, write_json
+from configure import ROOT, apply_access, apply_qzone_patch, apply_reply_policy, read_json, write_json
 from astrbot.core.db.sqlite import SQLiteDatabase
 
 
@@ -33,6 +33,7 @@ def main() -> None:
         raise RuntimeError("The migrated configuration must contain one QQ adapter")
     config["dashboard"].update(host="127.0.0.1", port=6185)
     apply_access(config, read_json(ROOT / "data/cuteq-access.json"))
+    apply_reply_policy(config)
     config["plugin_set"] = ["*"]
     config["timezone"] = "Asia/Shanghai"
     write_json(config_path, config)
