@@ -10,7 +10,10 @@
     "version": "4.18.41",
     "asset": "NapCat.Shell.Windows.Node.zip",
     "repository": "https://github.com/NapNeko/NapCatQQ",
-    "release": "https://github.com/NapNeko/NapCatQQ/releases/tag/v4.18.41"
+    "release": "https://github.com/NapNeko/NapCatQQ/releases/tag/v4.18.41",
+    "linux_asset": "NapCat.Shell.zip",
+    "linux_qq_version": "3.2.34-53644",
+    "linux_qq_source": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.36/beta/9ee04bef/linuxqq_3.2.34-53644_amd64.deb"
   },
   "ffmpeg": {
     "version": "9.0.2",
@@ -20,7 +23,7 @@
   "project_plugins": [
     {
       "name": "astrbot_plugin_lonelyfriend_memory",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "source": "plugins/astrbot_plugin_lonelyfriend_memory",
       "astrbot_version": "4.29.1",
       "memory_companion_version": "2.3.1"
@@ -31,19 +34,8 @@
       "name": "astrbot_plugin_qzone",
       "version": "3.1.3",
       "repository": "https://github.com/Zhalslar/astrbot_plugin_qzone",
-      "commit": "f474c50c9b517655d8475df34ad0c129b70193d4"
-    },
-    {
-      "name": "astrbot_plugin_bilibili_ai_bot",
-      "version": "1.7.2",
-      "repository": "https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot",
-      "commit": "8ba359e5c3b9e4909475690bafa739ab5c114244"
-    },
-    {
-      "name": "astrbot_plugin_xiaoheihe_adapter",
-      "version": "1.3.3",
-      "repository": "https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter",
-      "commit": "90d3c9d4d051f912d80ba02b38d5f8f0a5a95aac"
+      "commit": "f474c50c9b517655d8475df34ad0c129b70193d4",
+      "patch": "deploy/patches/qzone-autopublish.patch"
     },
     {
       "name": "astrbot_plugin_memory_companion",
@@ -57,5 +49,6 @@
       "repository": "https://github.com/Pancakes-Labs/astrbot_plugin_proactive_chat",
       "commit": "77a1d408ccd003a9d34ad4f51acfb8fc17bc35f5"
     }
-  ]
+  ],
+  "python_linux": "3.12.3"
 }

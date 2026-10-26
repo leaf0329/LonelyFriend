@@ -9,3 +9,6 @@ logs/
 *.lock
 __pycache__/
 *.pyc
+*.pem
+*.ppk
+*.key

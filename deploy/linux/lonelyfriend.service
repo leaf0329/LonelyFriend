@@ -1,0 +1,28 @@
+[Unit]
+Description=LonelyFriend QQ chat and memory
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=lonelyfriend
+Group=lonelyfriend
+WorkingDirectory=/opt/lonelyfriend
+Environment=HOME=/opt/lonelyfriend
+Environment=ASTRBOT_ROOT=/opt/lonelyfriend
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONUTF8=1
+Environment=TZ=Asia/Shanghai
+Environment=HF_HUB_OFFLINE=1
+Environment=OMP_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=2
+ExecStart=/opt/lonelyfriend/.venv/bin/python -m astrbot.cli run
+Restart=always
+RestartSec=10
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target

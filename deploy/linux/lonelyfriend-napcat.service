@@ -1,0 +1,27 @@
+[Unit]
+Description=LonelyFriend NapCat QQ connection
+Wants=network-online.target
+After=network-online.target lonelyfriend.service
+
+[Service]
+Type=simple
+User=lonelyfriend
+Group=lonelyfriend
+WorkingDirectory=/opt/lonelyfriend
+Environment=HOME=/opt/lonelyfriend
+Environment=TZ=Asia/Shanghai
+Environment=NAPCAT_WORKDIR=/opt/lonelyfriend/data/napcat
+Environment=NAPCAT_DISABLE_TIME_SYNC=1
+Environment=NAPCAT_DISABLE_BYPASS=1
+Environment=NAPCAT_DISABLE_MULTI_PROCESS=1
+Environment=NAPCAT_DISABLE_PIPE=1
+ExecStart=/usr/bin/xvfb-run -a /opt/lonelyfriend/runtime/qq/opt/QQ/qq --no-sandbox --disable-gpu --disable-dev-shm-usage
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target

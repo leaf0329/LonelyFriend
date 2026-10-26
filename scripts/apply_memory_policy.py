@@ -9,9 +9,6 @@ def main() -> None:
     install_project_plugin()
     root_config = ROOT / "data/cmd_config.json"
     configs = [root_config]
-    profile = ROOT / "data/cuteq-public-profile.json"
-    if profile.exists():
-        configs.append(ROOT / "data/config" / f"abconf_{read_json(profile)['id']}.json")
     for path in configs:
         value = read_json(path)
         apply_context_policy(value)

@@ -80,18 +80,14 @@ def main() -> None:
         client.headers["Authorization"] = "Bearer " + result["data"]["token"]
         plugins = client.get("/api/v1/plugins")
         plugins.raise_for_status()
-        expected = ["astrbot_plugin_qzone", "astrbot_plugin_bilibili_ai_bot", "astrbot_plugin_xiaoheihe_adapter", "astrbot_plugin_memory_companion", "astrbot_plugin_proactive_chat", "astrbot_plugin_lonelyfriend_memory"]
+        expected = ["astrbot_plugin_qzone", "astrbot_plugin_memory_companion", "astrbot_plugin_proactive_chat", "astrbot_plugin_lonelyfriend_memory"]
         assert all(name in plugins.text for name in expected)
         failed = client.get("/api/v1/plugins/failed")
         failed.raise_for_status()
         assert not failed.json()["data"], "Some plugins failed to load."
         report["dashboard"] = {"reachable": True, "authentication_required": True, "plugins_loaded": expected, "failed_plugins": []}
-        profile = read_json(ROOT / "data/cuteq-public-profile.json")
-        profiles = client.get("/api/v1/config-routes").json()["data"]["routing"]
-        assert profiles["cuteq_xiaoheihe::"] == profile["id"]
-        report["public_profile_isolated"] = True
         commands = client.get("/api/v1/commands").json()["data"]["items"]
-        social_commands = [command for command in commands if command["plugin"] in ("astrbot_plugin_qzone", "astrbot_plugin_bilibili_ai_bot")]
+        social_commands = [command for command in commands if command["plugin"] == "astrbot_plugin_qzone"]
         assert social_commands and all(command["permission"] == "admin" for command in social_commands)
         report["social_commands_require_admin"] = len(social_commands)
         if args.chat:
@@ -122,7 +118,7 @@ def main() -> None:
     dimensions = json.loads(inspected.stdout)["streams"][0]
     assert dimensions == {"width": 64, "height": 64}
     report["video_tools"] = {"ffmpeg": True, "ffprobe": True, "synthetic_video_decoded": True}
-    report["social_accounts"] = {"qq": "logged_in" if qq_logged_in else "awaiting_login", "bilibili": "awaiting_login", "xiaoheihe": "awaiting_login", "live_publication_verified": False}
+    report["social_accounts"] = {"qq": "logged_in" if qq_logged_in else "awaiting_login", "live_publication_verified": False}
     write_json(ROOT / "data/verification.json", report)
     print(json.dumps(report, ensure_ascii=False, indent=2))
 

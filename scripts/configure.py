@@ -26,6 +26,9 @@ def read_json(path: Path):
 
 
 def read_baseline_config(name: str):
+    fixture = ROOT / ".cache/validation-baseline" / name
+    if fixture.is_file():
+        return read_json(fixture)
     content = subprocess.check_output(["git", "show", f"baseline-deployed-2026-10-24:config/deployed-baseline/{name}"], cwd=ROOT)
     return json.loads(content.decode("utf-8-sig"))
 
@@ -66,6 +69,25 @@ def configure_local_embedding(config: dict) -> None:
 def install_project_plugin() -> None:
     name = "astrbot_plugin_lonelyfriend_memory"
     shutil.copytree(ROOT / "plugins" / name, ROOT / "data/plugins" / name, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+
+
+def apply_qzone_patch() -> None:
+    plugin = ROOT / "data/plugins/astrbot_plugin_qzone"
+    patch = ROOT / "deploy/patches/qzone-autopublish.patch"
+    # Windows checkouts retain CRLF in migration archives; git patches use LF.
+    for relative in ("main.py", "core/llm_action.py", "core/scheduler.py"):
+        path = plugin / relative
+        content = path.read_bytes()
+        if b"\r\n" in content:
+            path.write_bytes(content.replace(b"\r\n", b"\n"))
+    command = ["git", "-C", str(plugin), "apply"]
+    check = subprocess.run(command + ["--check", str(patch)], capture_output=True)
+    if check.returncode == 0:
+        subprocess.run(command + [str(patch)], check=True)
+    else:
+        reverse = subprocess.run(command + ["--reverse", "--check", str(patch)], capture_output=True)
+        if reverse.returncode != 0:
+            raise RuntimeError("The QQ space patch does not match the installed plugin version: " + check.stderr.decode("utf-8", errors="replace"))
 
 
 def memory_tools() -> list[str]:
@@ -116,6 +138,7 @@ async def set_persona(prompt: str, tools: list[str]) -> None:
 
 def main() -> None:
     install_project_plugin()
+    apply_qzone_patch()
     private = read_json(ROOT / "data/cuteq-private.json")
     if "napcat_token" not in private:
         private["napcat_token"] = secrets.token_hex(24)
@@ -162,7 +185,7 @@ def main() -> None:
         "id": QQ_PLATFORM_ID, "type": "aiocqhttp", "enable": True,
         "ws_reverse_host": "127.0.0.1", "ws_reverse_port": 6199,
         "ws_reverse_token": private["onebot_token"],
-    }, {"id": "cuteq_xiaoheihe", "type": "xiaoheihe", "enable": False, "profile_id": "default"}]
+    }]
     apply_access(config, access)
     config.save_config()
 
@@ -199,27 +222,6 @@ def main() -> None:
     for key in ("post_prompt", "comment_prompt", "reply_prompt"):
         qzone["llm"][key] = prompt + "\n只基于本次明确给出的公开主题或帖子生成简短内容，不引用私人聊天。"
     qzone.save_config()
-
-    bili = plugin_config("astrbot_plugin_bilibili_ai_bot")
-    for key in ("LLM_PROVIDER_ID", "SUMMARY_PROVIDER_ID", "GENERATION_PROVIDER_ID"):
-        bili[key] = PROVIDER_ID
-    bili["VIDEO_VISION_PROVIDER_ID"] = PROVIDER_ID
-    bili["IMAGE_VISION_PROVIDER_ID"] = PROVIDER_ID
-    bili["VIDEO_VISION_FORMAT"] = "none"
-    for key in ("ENABLE_REPLY", "ENABLE_PRIVATE_MESSAGES", "ENABLE_LIVE_DANMAKU_REPLY", "ENABLE_PROACTIVE", "ENABLE_DYNAMIC", "ENABLE_DYNAMIC_WATCH", "ENABLE_BANGUMI", "ENABLE_OWNER_RECOMMEND", "ENABLE_LLM_TOOLS", "ENABLE_AUTO_BLOCK", "PROACTIVE_LIKE", "PROACTIVE_COIN", "PROACTIVE_FAV", "PROACTIVE_FOLLOW", "PROACTIVE_COMMENT"):
-        bili[key] = False
-    bili["USE_ASTRBOT_PERSONA"] = True
-    bili["MEMORY_ISOLATION_MODE"] = "isolated"
-    bili.save_config()
-
-    xhh = plugin_config("astrbot_plugin_xiaoheihe_adapter")
-    for profile in xhh["profiles"]:
-        profile["dry_run"] = True
-    xhh["providers"]["llm_provider_id"] = PROVIDER_ID
-    xhh["providers"]["image_provider_id"] = PROVIDER_ID
-    xhh["proactive_feed"].update(enabled=False, dry_run=True, review_required=True)
-    xhh["permissions"]["map_owner_to_astrbot_admin"] = False
-    xhh.save_config()
 
     napcat_config = ROOT / "data/napcat/config"
     write_json(napcat_config / "webui.json", {

@@ -1,0 +1,45 @@
+diff --git a/core/llm_action.py b/core/llm_action.py
+index 495bc63..ade8854 100644
+--- a/core/llm_action.py
++++ b/core/llm_action.py
+@@ -195,7 +195,9 @@ class LLMAction:
+         if not self.cfg.client:
+             raise RuntimeError("客户端未初始化")
+ 
+-        if group_id:
++        if self.cfg.source.post_max_msg <= 0:
++            contexts = []
++        elif group_id:
+             contexts = await self._get_msg_contexts(group_id)
+         else:  # 随机获取一个群组
+             group_list = await self.cfg.client.get_group_list()
+diff --git a/core/scheduler.py b/core/scheduler.py
+index c4ae532..29d5dd5 100644
+--- a/core/scheduler.py
++++ b/core/scheduler.py
+@@ -174,7 +174,9 @@ class AutoPublish(AutoRandomCronTask):
+ 
+     async def do_task(self):
+         try:
+-            text = await self.service.llm.generate_post()
++            text = await self.service.llm.generate_post(
++                topic=f"北京时间 {datetime.now(self.timezone):%Y-%m-%d %H:%M}，适合公开分享的一条轻松想法或此刻心情"
++            )
+         except Exception as e:
+             logger.error(f"自动生成内容失败：{e}")
+             return
+diff --git a/main.py b/main.py
+index 77a1002..e1af1b0 100644
+--- a/main.py
++++ b/main.py
+@@ -65,6 +65,10 @@ class QzonePlugin(Star):
+         if not self.auto_publish and self.cfg.trigger.publish_cron:
+             self.auto_publish = AutoPublish(self.cfg, self.service, self.sender)
+ 
++    @filter.on_astrbot_loaded()
++    async def bind_qq_after_startup(self):
++        self._capture_page_client()
++
+     def _register_page_web_apis(self) -> None:
+         routes = (
+             ("page/status", self.page_status, ["GET"], "Qzone dashboard status"),

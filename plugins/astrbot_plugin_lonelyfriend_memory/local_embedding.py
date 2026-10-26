@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -43,7 +44,7 @@ class LocalChineseEmbeddingProvider(EmbeddingProvider):
 
         if self._model is None:
             model_path = snapshot_download(REPOSITORY, revision=REVISION, cache_dir=str(self.cache_dir), allow_patterns=MODEL_FILES, local_files_only=True)
-            self._model = TextEmbedding(MODEL, specific_model_path=model_path, local_files_only=True, threads=4, providers=["CPUExecutionProvider"])
+            self._model = TextEmbedding(MODEL, specific_model_path=model_path, local_files_only=True, threads=min(4, os.cpu_count() or 1), providers=["CPUExecutionProvider"])
         chunks: list[str] = []
         ranges: list[tuple[int, int]] = []
         for text in texts:

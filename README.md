@@ -1,6 +1,6 @@
 # LonelyFriend
 
-面向长期陪伴的 QQ 角色聊天项目，基于 AstrBot、NapCat 和 DeepSeek 构建。支持指定好友私聊、群聊接话，并通过插件接入 QQ 空间、B 站和小黑盒。
+面向长期陪伴的 QQ 角色聊天项目，基于 AstrBot、NapCat 和 DeepSeek 构建。支持指定好友私聊、群聊接话、长期记忆和 QQ 空间。
 
 项目重点是让角色在长期交谈中保留具体经历、识别人和事件的区别，并在需要时回查原始对话。默认角色为“大肥鱼”，可以自行修改人设。
 
@@ -11,7 +11,7 @@
 - **本地长期记忆**：原文、阶段总结和结构化事实分层保存；细节不足时通过工具查原文。
 - **长消息保存**：将获准 QQ 来信的完整文字接入原文事务存储，避免普通采集路径截短消息。
 - **持续对话**：按 token 预算整理工作上下文，保留近期原文；不按固定 80 轮直接丢弃旧上下文。
-- **平台扩展**：通过现成插件使用空间草稿与发布、B 站评论和动态、小黑盒通知回复与主动浏览。
+- **QQ 空间**：查看动态、生成草稿、发布说说；可选择开启带随机时间偏移的自动发布。
 - **后台运行**：Windows 隐藏启动、停止与名单应用入口，管理面板仅监听本机地址。
 
 ## 组成
@@ -23,7 +23,7 @@
 | DeepSeek | 对话生成与历史整理 |
 | MemoryCompanion | 长期记忆、原文查询和会话可见性 |
 | LonelyFriend 原文保存适配器 | 将获准 QQ 来信接入完整原文存储，并保持来源和人格归属 |
-| 社区插件 | QQ 空间、B 站和小黑盒接入 |
+| QQ 空间插件 | 动态查看、草稿、说说发布与定时调度 |
 
 第三方组件版本和提交固定在 [sources.lock.json](sources.lock.json)。本机 Python 依赖版本见 [requirements-windows.lock.txt](requirements-windows.lock.txt)。项目原文适配器针对 AstrBot 4.29.1 和 MemoryCompanion 2.3.1，升级这两个组件时需要同步验证接口兼容。
 
@@ -31,7 +31,7 @@
 
 当前启动脚本面向 Windows，使用 Python 3.12、Git、NapCat Windows Node 版和 FFmpeg。模型默认接入 DeepSeek 官方 API 的 `deepseek-flash`。
 
-Linux 服务器需要安装对应系统的 NapCat 和 Python 环境，并自行设置进程管理；Windows 虚拟环境不能直接复制到 Linux 使用。
+Linux 服务器使用 Ubuntu 24.04、Python 3.12 和 systemd 后台服务，支持从 Windows 迁移角色与记忆。安装和维护见 [服务器部署](docs/server.md)。Windows 虚拟环境不能直接复制到 Linux 使用。
 
 ## 安装
 
@@ -96,7 +96,7 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 .\scripts\manage.ps1 -Action Start
 ```
 
-等待管理面板可访问后，初始化公开社区配置与平台命令权限：
+等待管理面板可访问后，将 QQ 空间命令限制为管理员使用：
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/prepare_public_profile.py
@@ -145,7 +145,7 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 - 本地 BGE 中文模型为结构化记忆与原文建立语义索引，与关键词、时间和权限过滤共同使用。首次下载模型后，Embedding 在本机 CPU 上运行，无需额外的 Embedding API 密钥。
 - 对原生策略识别出的历史追问，会在首次回答前补入有权限的原文候选，减少模型只口头承诺查找却没有调用工具的情况；普通闲聊不强制进行原文回忆。
 - 工作上下文预算为 800000 个估算 token，框架在约 656000 时触发整理，近期约 25% 的上下文按完整轮次保留。
-- 私聊原文按账号和窗口隔离；小黑盒公开讨论使用独立配置，不加载 QQ 私聊记忆工具。
+- 私聊原文按账号和窗口隔离；空间自动发布不读取私聊和群聊原文。
 
 上下文整理是有损的，本地原文提供补查依据。检索和模型理解仍可能遗漏或混淆内容；单条超大输入也不能突破模型服务的硬性上下文限制。具体实现边界与验证方法见 [验证说明](docs/validation.md)。
 
@@ -153,17 +153,17 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 原文适配器保存可见的文字消息，使用底层接口的 256 KiB 单条正文边界；图片、语音和附件不作为完整媒体档案保存。角色回复沿用 MemoryCompanion 的原有采集方式。
 
-## 社区平台
+## QQ 空间
 
-- **QQ 空间**：支持生成待审核草稿和发布说说。自动发布与自动评论默认关闭，草稿不自动取任意群聊记录作为素材。
-- **B 站**：在插件详情中打开 BiliBot 控制中心扫码，也可由管理员使用 `/bili登录` 和 `/bili确认`。评论、动态和其他自动账号行为需要分别启用。
-- **小黑盒**：在插件管理页扫码，并为 `cuteq_xiaoheihe` 适配器绑定账号档案。默认禁用适配器并保留模拟运行，可先核对生成内容再开放真实发送。
+QQ 登录成功后，空间插件通过同一个 QQ 账号获取登录凭据，无需另外填写 Cookie。支持 `/看说说`、`/写说说 主题`、`/看稿`、`/过稿 稿件ID` 和 `/发说说 正文` 等命令，命令仅管理员可用。
 
-空间和 B 站的聊天命令仅管理员可用。不同平台沿用统一基础人设，但不自动全量共享私人记忆，也未实现所有平台活动的统一回忆。账号登录、内容发送和实际可见性需要逐个平台核对。
+首次初始化默认关闭自动发布和自动评论。服务器迁移时可显式选择 `--enable-qzone-publish`：每天北京时间 12:00、21:00 各安排一次发布，前后随机浮动 45 分钟，无需逐条审核。自动发布使用单独的公开任务提示，不读取私聊和群聊原文；模型输出仍需要结合实际使用观察。自动评论保持关闭。
+
+仓库只安装 QQ 聊天、主动聊天、记忆和 QQ 空间相关插件，不安装 B 站、小黑盒适配器。
 
 ## 数据与隐私
 
-`data/` 包含密钥、密码、平台登录状态、名单、聊天和记忆，不应公开提交。`logs/` 可能含聊天或管理信息；两者均已加入 Git 忽略列表。
+`data/` 包含密钥、密码、平台登录状态、名单、聊天和记忆，不应公开提交。`logs/` 可能含聊天或管理信息；两者和常见 SSH 私钥文件均已加入 Git 忽略列表。迁移包也包含私人数据，只保存在被忽略的 `.cache/` 中，通过 SSH 传输。
 
 本地保存不等于本地推理：被选入上下文的记忆片段会随请求发给配置的模型服务。迁移到服务器后，数据库位于服务器。长期保留会增加磁盘占用；需要清除某段经历时，应同时检查原文与派生记忆。
 
@@ -183,5 +183,3 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 - [MemoryCompanion](https://github.com/menglimi/astrbot_plugin_memory_companion)
 - [主动聊天插件](https://github.com/Pancakes-Labs/astrbot_plugin_proactive_chat)
 - [QQ 空间插件](https://github.com/Zhalslar/astrbot_plugin_qzone)
-- [B 站 AI Bot](https://github.com/chenluQwQ/astrbot_plugin_bilibili_ai_bot)
-- [小黑盒适配器](https://github.com/674537331/astrbot_plugin_xiaoheihe_adapter)

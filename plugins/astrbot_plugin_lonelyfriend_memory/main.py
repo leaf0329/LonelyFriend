@@ -153,7 +153,7 @@ async def finish_source_index(service, ctx) -> bool:
     return False
 
 
-@register("astrbot_plugin_lonelyfriend_memory", "leaf0329", "获准 QQ 原文保存与本地中文语义检索", "0.2.0")
+@register("astrbot_plugin_lonelyfriend_memory", "leaf0329", "获准 QQ 原文保存与本地中文语义检索", "0.2.1")
 class LonelyFriendMemory(Star):
     def __init__(self, context: Context):
         super().__init__(context)

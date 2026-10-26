@@ -1,0 +1,53 @@
+{
+  "qq_only": true,
+  "private_contacts": 1,
+  "plugins_loaded": [
+    "astrbot_plugin_lonelyfriend_memory",
+    "astrbot_plugin_memory_companion",
+    "astrbot_plugin_proactive_chat",
+    "astrbot_plugin_qzone"
+  ],
+  "failed_plugins": [],
+  "qzone_admin_commands": 14,
+  "dashboard_authentication": true,
+  "model_test": {
+    "id": "cuteq-deepseek-flash",
+    "model": "deepseek-flash",
+    "type": "chat_completion",
+    "name": "cuteq-deepseek-flash",
+    "status": "available",
+    "error": null
+  },
+  "local_embedding_dimensions": 512,
+  "qzone_account_bound": false,
+  "qq_logged_in": false,
+  "qq_login_phase": "waiting_qrcode",
+  "memory_rows": {
+    "memories": 2,
+    "timeline": 57,
+    "capture_sources": 43,
+    "source_semantic_documents": 114
+  },
+  "qzone_publish_cron": "0 12,21 * * *",
+  "qzone_group_history_disabled": true,
+  "live_qq_delivery_verified": false,
+  "live_publication_verified": false,
+  "checked_date": "2026-10-26",
+  "operating_system": "Ubuntu 24.04 amd64",
+  "python": "3.12.3",
+  "linux_regression_tests": {
+    "passed": 18,
+    "failed": 0
+  },
+  "systemd_services": {
+    "lonelyfriend": "enabled and active",
+    "lonelyfriend-napcat": "enabled and active"
+  },
+  "persona_prompt_matches_migrated_file": true,
+  "resource_snapshot": {
+    "memory_total_mib": 1741,
+    "memory_available_mib": 957,
+    "swap_used_mib": 81
+  },
+  "upstream_catalog_network_timeouts": true
+}

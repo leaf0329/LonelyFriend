@@ -28,7 +28,7 @@ LonelyFriend 使用 MemoryCompanion 2.3.1 保存与组织记忆，项目适配�
 
 ## 本地混合检索
 
-Embedding 使用 `BAAI/bge-small-zh-v1.5` 的 Qdrant ONNX 版本，固定模型修订，512 维，CPU 四线程；通过 FastEmbed 运行。模型准备脚本下载指定文件，正常聊天时只读取本地模型。
+Embedding 使用 `BAAI/bge-small-zh-v1.5` 的 Qdrant ONNX 版本，固定模型修订，512 维，通过 FastEmbed 在 CPU 上运行，线程数为 `min(4, CPU 数)`。模型准备脚本下载指定文件，正常聊天时只读取本地模型。
 
 模型输入有限长，原文按 320 字符、48 字符重叠切片；较长的向量输入进一步分片并合并表示，减少仅编码开头造成的细节遗漏。语义结果是相关候选，仍需核对原文、更正和事件归属。
 
