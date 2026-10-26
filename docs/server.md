@@ -32,6 +32,8 @@ sudo bash install.sh /path/lonelyfriend.tar.gz /path/NapCat.Shell.zip /path/QQ.d
 
 安装器用于首次迁移，发现现有 `data/cmd_config.json` 后会停止，避免覆盖在线数据。它只安装聊天、记忆、主动聊天和空间相关插件；AstrBot 自身声明的公共运行依赖仍正常安装。
 
+Linux 迁移配置显式启用 NapCat 的 Hook、Window、Module、Process、Container、JS 六项反检测，并保持 `o3HookMode=0`。启动服务不设置 `NAPCAT_DISABLE_BYPASS=1`，避免覆盖网页中的六项配置。这些选项沿用上游配置定义的常规值，不能保证账号不会被检测或限制。修改后需要重启 NapCat，并检查启动日志及 QQ 连接状态。
+
 ## 管理与 QQ 登录
 
 服务端的管理面板、QQ 登录页面和 OneBot 接口只监听 `127.0.0.1`，无需将 6185、6099、6199 端口向公网开放。使用 SSH 本地转发访问：

@@ -12,7 +12,6 @@ Environment=HOME=/opt/lonelyfriend
 Environment=TZ=Asia/Shanghai
 Environment=NAPCAT_WORKDIR=/opt/lonelyfriend/data/napcat
 Environment=NAPCAT_DISABLE_TIME_SYNC=1
-Environment=NAPCAT_DISABLE_BYPASS=1
 Environment=NAPCAT_DISABLE_MULTI_PROCESS=1
 Environment=NAPCAT_DISABLE_PIPE=1
 ExecStart=/usr/bin/xvfb-run -a /opt/lonelyfriend/runtime/qq/opt/QQ/qq --no-sandbox --disable-gpu --disable-dev-shm-usage

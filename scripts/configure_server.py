@@ -60,6 +60,14 @@ def main() -> None:
     webui = read_json(webui_path)
     webui.update(host="127.0.0.1", port=6099, token=private["napcat_token"], autoLoginAccount="")
     write_json(webui_path, webui)
+
+    napcat_path = ROOT / "data/napcat/config/napcat.json"
+    napcat = read_json(napcat_path)
+    napcat.update(
+        bypass={key: True for key in ("hook", "window", "module", "process", "container", "js")},
+        o3HookMode=0,
+    )
+    write_json(napcat_path, napcat)
     asyncio.run(reset_legacy_platform_routes())
     print(json.dumps({"qq_only": True, "qzone_autopublish": args.enable_qzone_publish,
                       "qzone_publish_cron": qzone["trigger"]["publish_cron"],

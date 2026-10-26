@@ -12,3 +12,5 @@ __pycache__/
 *.pem
 *.ppk
 *.key
+*.lnk
+LonelyFriend 服务器登录信息.txt
