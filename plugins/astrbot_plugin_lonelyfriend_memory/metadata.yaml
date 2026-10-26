@@ -1,7 +1,7 @@
 name: astrbot_plugin_lonelyfriend_memory
 display_name: LonelyFriend 原文与语义检索
 desc: 将获准 QQ 完整文字接入 MemoryCompanion，并提供本地中文 Embedding。
-version: v0.2.1
+version: v0.2.2
 author: leaf0329
 repo: https://github.com/leaf0329/LonelyFriend
 astrbot_version: "==4.29.1"

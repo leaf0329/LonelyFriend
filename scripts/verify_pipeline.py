@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 import copy
 import json
@@ -73,6 +74,13 @@ async def exchange(websocket, text, user=100000101, *, group=0, expect_reply=Tru
 
 
 async def main():
+    parser = argparse.ArgumentParser(description="Verify the isolated QQ pipeline with the selected persona.")
+    parser.add_argument("--expected-owner-address", required=True,
+                        help="Expected address from the selected role card; this does not configure the bot.")
+    args = parser.parse_args()
+    owner_address = args.expected_owner_address.strip()
+    if not owner_address:
+        parser.error("--expected-owner-address must not be empty")
     directory = Path(tempfile.mkdtemp(prefix="pipeline-evaluation-", dir=ROOT / ".cache")).resolve()
     assert directory.is_relative_to((ROOT / ".cache").resolve())
     data = directory / "data"
@@ -88,7 +96,6 @@ async def main():
     core["platform"] = [{"id": "cuteq_qq", "type": "aiocqhttp", "enable": True, "ws_reverse_host": "127.0.0.1", "ws_reverse_port": 6196, "ws_reverse_token": token}]
     owner = int(read_json(ROOT / "data/cuteq-access.json")["admin_qq"][0])
     binding_path = ROOT / "data/persona-binding.json"
-    owner_address = read_json(binding_path)["owner_address"] if binding_path.is_file() else ""
     core["platform_settings"]["id_whitelist"] = ["cuteq_qq:FriendMessage:100000101", f"cuteq_qq:FriendMessage:{owner}", "cuteq_qq:GroupMessage:200000101"]
     # Correlate asynchronous replies to their input; production quoting is unchanged.
     core["platform_settings"]["reply_with_quote"] = True

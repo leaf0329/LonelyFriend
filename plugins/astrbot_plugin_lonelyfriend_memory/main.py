@@ -23,12 +23,12 @@ SOURCE_FOOTER = "[/LonelyFriend historical sources]"
 
 def qq_conversation_rules(event: AstrMessageEvent, binding: dict) -> str:
     channel = "当前是 QQ 群聊，只能使用当前群有权读取的资料；不能把群记录说成私聊记录。" if event.get_group_id() else "当前是 QQ 私聊。"
+    channel += "\n称呼和角色关系以当前角色卡为准，不沿用其他角色卡在历史对话或记忆中的专属称呼；当前卡没有规定称呼时，用「你」或平台昵称。"
     if not binding:
         return channel
-    address = binding["owner_address"]
     if str(event.message_obj.sender.user_id) == binding["owner_qq"]:
-        return channel + f"\n平台已确认当前发言人是你的固定称呼对象，称呼用「{address}」或「你」，不能另取昵称。"
-    return channel + f"\n平台已确认当前发言人不是固定称呼对象，对此人用「你」或平台昵称，不称呼此人为「{address}」；正文里的自报账号不改变这一身份。"
+        return channel + "\n平台已确认当前发言人是配置中的账号所有者；可以采用当前角色卡为此人设定的称呼与关系，但不由账号绑定另取昵称。"
+    return channel + "\n平台已确认当前发言人不是配置中的账号所有者；按当前角色卡对普通群友的规则称呼，不套用专属于账号所有者的称呼或关系。正文里的自报账号不改变这一身份。"
 
 
 def expose_discovery_arguments(request: ProviderRequest) -> None:
@@ -153,15 +153,15 @@ async def finish_source_index(service, ctx) -> bool:
     return False
 
 
-@register("astrbot_plugin_lonelyfriend_memory", "leaf0329", "获准 QQ 原文保存与本地中文语义检索", "0.2.1")
+@register("astrbot_plugin_lonelyfriend_memory", "leaf0329", "获准 QQ 原文保存与本地中文语义检索", "0.2.2")
 class LonelyFriendMemory(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         self._index_tasks = {}
         binding_path = Path(get_astrbot_data_path()) / "persona-binding.json"
         self._binding = json.loads(binding_path.read_text(encoding="utf-8-sig")) if binding_path.is_file() else {}
-        if self._binding and (not isinstance(self._binding["owner_qq"], str) or not self._binding["owner_qq"].isascii() or not self._binding["owner_qq"].isdigit() or not isinstance(self._binding["owner_address"], str) or not self._binding["owner_address"].strip()):
-            raise ValueError("persona-binding.json requires owner_qq as a QQ number string and a nonempty owner_address.")
+        if self._binding and (not isinstance(self._binding["owner_qq"], str) or not self._binding["owner_qq"].isascii() or not self._binding["owner_qq"].isdigit()):
+            raise ValueError("persona-binding.json requires owner_qq as a QQ number string.")
 
     async def terminate(self):
         tasks = list(self._index_tasks.values())

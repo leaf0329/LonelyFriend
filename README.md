@@ -108,7 +108,7 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 本机专用角色卡可保存在 `data/persona.md`，初始化和应用记忆策略时优先使用这份文件；未配置时使用 `config/persona.md`。角色卡中的私人称呼与账号信息随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
 
-指定账号的固定称呼可通过本机 `data/persona-binding.json` 设置，字段为字符串 `owner_qq` 和 `owner_address`。绑定依据平台发送者身份，消息正文中的自报身份不会改变绑定；修改后重启服务。该文件与角色卡一样不提交到 Git。
+`data/persona-binding.json` 仅用字符串字段 `owner_qq` 标识账号所有者，依据平台发送者身份判断，消息正文中的自报身份不会改变绑定。称呼由当前角色卡决定，不从其他角色的历史记录或记忆继承；卡内没有规定时，使用「你」或平台昵称。旧版 `owner_address` 字段不再参与运行。修改账号绑定后重启聊天服务；该文件不提交到 Git。
 
 ## 使用
 
@@ -177,6 +177,8 @@ QQ 登录成功后，空间插件通过同一个 QQ 账号获取登录凭据，�
 ```
 
 `evaluate_memory.py`、`verify_context.py` 和 `verify_pipeline.py` 会调用真实模型并消耗 API 额度，使用虚构资料和隔离数据库。测试记录、对照方法和覆盖范围放在 [docs/validation.md](docs/validation.md)。
+
+运行 `verify_pipeline.py` 时，用 `--expected-owner-address` 指定当前角色卡的预期称呼，例如默认大肥鱼使用 `--expected-owner-address 主人`。此参数仅用于验收，不会修改运行中的称呼。
 
 ## 上游项目
 
