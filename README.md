@@ -104,6 +104,8 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 `configure.py` 用于首次初始化，会写入初始模型、平台、人设和插件设置。日常应用名单使用下方入口；单独更新本项目记忆策略使用 `scripts/apply_memory_policy.py`，执行前停止服务，完成后重新启动。
 
+预置角色基于 [dafeiyu-astrbot 的大肥鱼 QQ 人格 v2.1](https://github.com/whyever77/dafeiyu-astrbot)，适配为直接聊天台词，并接入本项目的原文回查与身份绑定。来源和改动记录在 `config/persona-source.json`，上游 MIT 许可保存在 `docs/licenses/dafeiyu-persona-MIT.txt`。
+
 本机专用角色卡可保存在 `data/persona.md`，初始化和应用记忆策略时优先使用这份文件；未配置时使用 `config/persona.md`。角色卡中的私人称呼与账号信息随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
 
 指定账号的固定称呼可通过本机 `data/persona-binding.json` 设置，字段为字符串 `owner_qq` 和 `owner_address`。绑定依据平台发送者身份，消息正文中的自报身份不会改变绑定；修改后重启服务。该文件与角色卡一样不提交到 Git。
