@@ -23,7 +23,7 @@
   "project_plugins": [
     {
       "name": "astrbot_plugin_lonelyfriend_memory",
-      "version": "0.2.1",
+      "version": "0.2.3",
       "source": "plugins/astrbot_plugin_lonelyfriend_memory",
       "astrbot_version": "4.29.1",
       "memory_companion_version": "2.3.1"

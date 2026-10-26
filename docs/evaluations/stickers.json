@@ -1,0 +1,64 @@
+{
+  "checked_on": "2026-10-27",
+  "model": "deepseek-flash",
+  "collection": {
+    "total": 583,
+    "animated": 323,
+    "approved": 531,
+    "excluded": 52
+  },
+  "automated_sticker_and_review_checks": 14,
+  "related_reply_delivery_checks": 7,
+  "related_persona_checks": 3,
+  "model_scenarios": [
+    {
+      "case": "private-celebration",
+      "passed": true,
+      "mock_image_sends": 1
+    },
+    {
+      "case": "private-goodnight",
+      "passed": true,
+      "mock_image_sends": 1
+    },
+    {
+      "case": "group-abstract",
+      "passed": true,
+      "mock_image_sends": 1
+    },
+    {
+      "case": "serious-no-image",
+      "passed": true,
+      "mock_image_sends": 0
+    }
+  ],
+  "online": {
+    "adapter_version": "0.2.3",
+    "plugins_loaded": 4,
+    "failed_plugins": 0,
+    "model_available": true,
+    "embedding_dimensions": 512,
+    "qq_ready": true,
+    "qzone_bound": true,
+    "napcat_restarted": false,
+    "core_configuration_preserved": true,
+    "qzone_configuration_preserved": true,
+    "proactive_schedule_preserved": true,
+    "available_memory_MiB": 873.2
+  },
+  "formal_start": {
+    "model_conversations": 0,
+    "platform_message_history": 0,
+    "memories": 0,
+    "timeline": 0,
+    "original_sources": 0,
+    "semantic_documents": 0,
+    "account_and_persona_configuration_preserved": true,
+    "old_migration_package_removed": true
+  },
+  "limitations": {
+    "live_qq_image_display_verified": false,
+    "long_term_meme_frequency_verified": false,
+    "local_test_history_cleanup": "blocked by policy; not executed"
+  }
+}

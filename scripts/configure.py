@@ -195,6 +195,8 @@ def main() -> None:
 
     prompt = load_persona_prompt()
     tools = memory_tools()
+    if (ROOT / "data/stickers/catalog.json").is_file():
+        tools.append("lonelyfriend_sticker")
     asyncio.run(set_persona(prompt, tools))
 
     memory = plugin_config("astrbot_plugin_memory_companion")

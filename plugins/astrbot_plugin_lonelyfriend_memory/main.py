@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections import deque
 from copy import deepcopy
 from datetime import datetime, timezone
 from importlib import import_module
@@ -9,13 +10,15 @@ from pathlib import Path
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.message_components import Plain
+from astrbot.api.message_components import Image, Plain
 from astrbot.api.provider import LLMResponse, ProviderRequest
 from astrbot.api.star import Context, Star, register
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 from astrbot.core.message.message_event_result import ResultContentType
+from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
 
 from . import local_embedding
+from .stickers import StickerLibrary
 
 SOURCE_HEADER = "[LonelyFriend historical sources]"
 SOURCE_FOOTER = "[/LonelyFriend historical sources]"
@@ -153,11 +156,13 @@ async def finish_source_index(service, ctx) -> bool:
     return False
 
 
-@register("astrbot_plugin_lonelyfriend_memory", "leaf0329", "获准 QQ 原文保存与本地中文语义检索", "0.2.2")
+@register("astrbot_plugin_lonelyfriend_memory", "leaf0329", "获准 QQ 原文保存、本地中文语义检索与表情", "0.2.3")
 class LonelyFriendMemory(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         self._index_tasks = {}
+        self._stickers = StickerLibrary(Path(get_astrbot_data_path()) / "stickers")
+        self._sticker_recent = {}
         binding_path = Path(get_astrbot_data_path()) / "persona-binding.json"
         self._binding = json.loads(binding_path.read_text(encoding="utf-8-sig")) if binding_path.is_file() else {}
         if self._binding and (not isinstance(self._binding["owner_qq"], str) or not self._binding["owner_qq"].isascii() or not self._binding["owner_qq"].isdigit()):
@@ -222,6 +227,12 @@ class LonelyFriendMemory(Star):
     async def on_source_query_schema(self, event: AstrMessageEvent, request: ProviderRequest):
         if event.get_platform_id() == "cuteq_qq" and not event.is_stopped():
             expose_discovery_arguments(request)
+            if self._stickers.entries and request.func_tool is not None and any(tool.name == "lonelyfriend_sticker" and getattr(tool, "active", True) for tool in request.func_tool.tools):
+                request.system_prompt = (request.system_prompt or "") + (
+                    f"\n当前有 {len(self._stickers.entries)} 张审核通过的本地大肥鱼表情可通过 lonelyfriend_sticker 发送。"
+                    "可以在合适的情绪或玩笑处偶尔发一张，不必每轮发，不连续几轮贴图；认真讨论问题时优先文字。"
+                    "用户明确要表情时可以发送。工具成功后继续自然聊天，不汇报检索、发送过程，不用文字动作描写冒充图片。"
+                )
             metadata = next((star for star in self.context.get_all_stars() if star.root_dir_name == "astrbot_plugin_memory_companion" and star.activated), None)
             if metadata is None or metadata.star_cls is None:
                 return
@@ -251,6 +262,39 @@ class LonelyFriendMemory(Star):
         if result is not None and result.result_content_type == ResultContentType.LLM_RESULT and final:
             # Buffered tool preambles can contradict the final evidence-based reply.
             result.chain = deepcopy(final)
+
+    @filter.llm_tool(name="lonelyfriend_sticker")
+    async def send_local_sticker(self, event: AstrMessageEvent, query: str) -> str:
+        """按当前情绪或聊天场景从审核通过的本地图库选一张大肥鱼表情，直接发送到当前 QQ 会话。
+
+        偶尔用图片表达情绪，不每轮发。每轮最多一张，已发送后继续自然的文字回答，
+        不报告“已发送表情”。不存在合适图片时返回未发送，不会临时上网找图。
+
+        Args:
+            query(string): 1 至 3 个空格分开的情绪或场景词，例如“开心 庆祝”“无语 嫌弃”“睡觉 晚安”“摸头 安慰”“抽象 整活”。
+        """
+        if event.get_platform_id() != "cuteq_qq" or event.is_stopped():
+            return json.dumps({"ok": False, "error": "只能向当前获准 QQ 会话发送"}, ensure_ascii=False)
+        if event.get_extra("lonelyfriend_sticker_attempted", False):
+            return json.dumps({"ok": False, "error": "本轮已尝试发送一张表情，请继续文字回答"}, ensure_ascii=False)
+        recent = self._sticker_recent.setdefault(event.unified_msg_origin, deque(maxlen=5))
+        selected = self._stickers.choose(query, list(recent))
+        if selected is None:
+            return json.dumps({"ok": False, "error": "本地没有匹配的表情，本轮用文字自然回应即可"}, ensure_ascii=False)
+        # Reserve before awaiting IO so parallel tool calls cannot send a burst.
+        event.set_extra("lonelyfriend_sticker_attempted", True)
+        image = Image.fromFileSystem(selected["path"])
+        encoded = await image.convert_to_base64()
+        payload = [{"type": "image", "data": {"file": "base64://" + encoded, "sub_type": 1}}]
+        group = event.get_group_id()
+        await AiocqhttpMessageEvent._dispatch_send(
+            event.bot, getattr(event.message_obj, "raw_message", None), bool(group),
+            group or event.get_sender_id(), payload,
+        )
+        recent.append(selected["id"])
+        logger.info("LonelyFriend 本地表情已发送: %s", selected["id"])
+        return json.dumps({"ok": True, "sent": True, "id": selected["id"],
+                           "name": selected["name"], "description": selected["description"]}, ensure_ascii=False)
 
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE, priority=1100)
     async def on_group_message(self, event: AstrMessageEvent):
