@@ -1,0 +1,6 @@
+name: astrbot_plugin_lonelyfriend_activities
+display_name: LonelyFriend 见闻与互动
+desc: 复用 RSSHub 阅读公开资讯、原生主动任务每日分享和模板表情工具
+version: v0.1.0
+author: leaf0329
+astrbot_version: ">=4.29.1"

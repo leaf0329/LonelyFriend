@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-29",
+  "versions": {
+    "astrbot": "4.29.1",
+    "rsshub": "2.1.4",
+    "parser": "1.6.1",
+    "meme_generator_plugin": "2.3.2",
+    "meme_generator_core": "0.2.3",
+    "self_learning": "4.4.4",
+    "activities": "0.1.0"
+  },
+  "automated_checks": {
+    "linux_extensions_regressions_passed": 7,
+    "windows_extensions_regressions_passed": 4,
+    "windows_optional_checks_skipped": 3,
+    "prior_access_regressions_passed": 6,
+    "prior_server_migration_regressions_passed": 1,
+    "dependency_conflicts": 0
+  },
+  "isolated_real_model": {
+    "external_qq_messages_sent": 0,
+    "web_search": true,
+    "read_feeds": true,
+    "persistent_future_task": true,
+    "meme_image_generated": true,
+    "meme_image_pixels": [
+      512,
+      512
+    ],
+    "meme_templates_ready": 300,
+    "verified_official_resource_files": 3039,
+    "private_and_group_daily_delivery": true,
+    "duplicate_daily_delivery_blocked": true,
+    "private_messages_excluded_from_shared_learning": true,
+    "public_link_parser": {
+      "supported_public_url": true,
+      "result_components": [
+        "Nodes"
+      ],
+      "seconds": 0.5,
+      "ok": true
+    },
+    "persona_backup_and_restore": {
+      "incremental_update_preserves_original": true,
+      "backup_created": true,
+      "distinct_backup_ids": true,
+      "restore_reported_success": true,
+      "restored_original_prompt": true,
+      "restored_tool_permissions": true
+    }
+  },
+  "live_checks": {
+    "date": "2026-10-29",
+    "active_plugins": 9,
+    "failed_plugins": [],
+    "rss_admin_only": true,
+    "learning_admin_only": true,
+    "learning_embedded_page_initialized": true,
+    "learning_page_requires_login": true,
+    "daily_managed_jobs": 2,
+    "next_daily_run_beijing": "2026-10-30 20:17",
+    "daily_jobs_unique": true,
+    "persona_runtime_matches_updated_card": true,
+    "existing_long_term_memory_preserved": true,
+    "staging_service_stopped": true,
+    "live_qq_test_messages_sent": 0,
+    "live_daily_delivery_tested": false,
+    "live_daily_delivery_not_run_reason": "当前已进入23:00—08:00安静时段；隔离通道已验证私聊和群聊两路投递与当日去重。"
+  },
+  "sources": [
+    "https://www.ithome.com/rss/",
+    "https://www.solidot.org/index.rss",
+    "https://www.gcores.com/rss",
+    "https://acg17.com/feed"
+  ],
+  "resource_snapshot": {
+    "system_memory_total_kib": 1782756,
+    "system_memory_available_kib": 989832,
+    "swap_used_kib": 234696,
+    "filesystem_available_gib": 24.83
+  },
+  "limits": [
+    "使用模拟 OneBot 接收端验收，没有给真实 QQ 好友或群发验收消息。",
+    "链接解析会受平台登录、风控与网络限制；只测试了一条公开 B 站视频，未测试全部支持站点。",
+    "自主学习尚未积累正式群聊批次，未声称已完成长期人格演化效果验证。",
+    "个别海外站点不可达；已配置的四个 RSS 源实际可抓取。",
+    "模型口吻测试是小样本，问句减少不等于所有对话均自然。"
+  ]
+}

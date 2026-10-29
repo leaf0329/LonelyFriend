@@ -18,6 +18,9 @@ def main() -> None:
     config = read_json(ROOT / "data/cmd_config.json")
     expected = {"astrbot_plugin_qzone", "astrbot_plugin_memory_companion",
                 "astrbot_plugin_proactive_chat", "astrbot_plugin_lonelyfriend_memory"}
+    if (ROOT / "data/extensions.json").is_file():
+        expected.update({"astrbot_plugin_rsshub", "astrbot_plugin_parser", "astrbot_plugin_meme_generator",
+                         "astrbot_plugin_self_learning", "astrbot_plugin_lonelyfriend_activities"})
     assert {p.name for p in (ROOT / "data/plugins").iterdir() if p.is_dir() and not p.name.startswith("_")} == expected
     assert [p["id"] for p in config["platform"]] == ["cuteq_qq"]
     assert config["dashboard"]["host"] == "127.0.0.1"

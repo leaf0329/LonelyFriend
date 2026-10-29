@@ -1,0 +1,192 @@
+--- a/main.py
++++ b/main.py
+@@ -101,6 +101,7 @@
+     # ── 命令方法（装饰器留在插件入口类，委托到纯函数） ───────────────────────
+ 
+     @filter.command("sub", alias={"订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_feed(self, event: AstrMessageEvent, args: str = ""):
+         """订阅 RSS 源。
+ 
+@@ -116,6 +117,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("unsub", alias={"取消订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def unsub_feed(self, event: AstrMessageEvent, args: str = ""):
+         """取消订阅（支持 ID/URL 批量）。
+ 
+@@ -130,6 +132,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("sub_list", alias={"订阅列表"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_list(self, event: AstrMessageEvent, args: str = ""):
+         """查看当前会话订阅列表（分页）。
+ 
+@@ -144,6 +147,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("sub_stop", alias={"rss_stop", "停止RSS", "停止推送"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def stop_rss_job(self, event: AstrMessageEvent, args: str = ""):
+         """停止当前会话推送任务。
+ 
+@@ -160,6 +164,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("sub_status", alias={"推送状态", "任务状态"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_status(self, event: AstrMessageEvent):
+         """查看当前会话推送任务状态（running + queued）。"""
+         result = _h.handle_sub_status(event, self._push_job_queue)
+@@ -167,6 +172,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("sub_state", alias={"订阅状态"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_state(self, event: AstrMessageEvent, sub_id_str: str = ""):
+         """切换订阅启用状态。
+ 
+@@ -180,11 +186,13 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command_group("sub_profile", alias={"订阅配置"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     def sub_profile_group(self):
+         """订阅/用户配置命令组。"""
+         pass
+ 
+     @sub_profile_group.command("set", alias={"设置"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_profile_set(self, event: AstrMessageEvent, args: str = ""):
+         """设置订阅或用户配置。
+ 
+@@ -197,6 +205,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @sub_profile_group.command("get", alias={"获取"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_profile_get(self, event: AstrMessageEvent, args: str = ""):
+         """查询用户配置。
+ 
+@@ -208,11 +217,13 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command_group("sub_session", alias={"会话设置"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     def sub_session_group(self):
+         """会话默认配置命令组。"""
+         pass
+ 
+     @sub_session_group.command("set", alias={"设置"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_set_session(
+         self, event: AstrMessageEvent, key: str = "", value: str = ""
+     ):
+@@ -226,6 +237,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @sub_session_group.command("get", alias={"获取"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def sub_get_session(self, event: AstrMessageEvent, key: str = ""):
+         """查看当前会话默认配置。
+ 
+@@ -237,6 +249,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("activate_subs", alias={"enable_subs", "启用全部订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def batch_activate(self, event: AstrMessageEvent, sub_ids: str = ""):
+         """批量启用订阅。
+ 
+@@ -249,6 +262,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("deactivate_subs", alias={"disable_subs", "禁用全部订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def batch_deactivate(self, event: AstrMessageEvent, sub_ids: str = ""):
+         """批量禁用订阅。
+ 
+@@ -261,6 +275,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("unsub_all", alias={"取消全部订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def unsub_all(self, event: AstrMessageEvent, scope: str = ""):
+         """取消全部订阅（当前会话或全局）。
+ 
+@@ -275,6 +290,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("sub_export", alias={"导出订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def export_subs(self, event: AstrMessageEvent, scope: str = ""):
+         """导出订阅为 TOML。
+ 
+@@ -289,6 +305,7 @@
+             yield event.plain_result(result["plain"])
+ 
+     @filter.command("sub_import", alias={"导入订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def import_subs(self, event: AstrMessageEvent, args: str = ""):
+         """导入订阅。
+ 
+@@ -364,6 +381,7 @@
+         return None
+ 
+     @filter.command("rsshelp", alias={"RSS帮助", "rss帮助"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def rsshelp(self, event: AstrMessageEvent):
+         """查看 RSSHub 命令帮助图片。"""
+         help_image_path = HelpImageCommand().execute(self.context)
+@@ -372,44 +390,44 @@
+             return
+         yield event.plain_result("没有找到帮助图片")
+ 
+-    @filter.permission_type(filter.PermissionType.ADMIN)
+     @filter.command("rsshub_kb_init", alias={"rss知识库初始化", "RSS知识库初始化"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def rsshub_kb_init(self, event: AstrMessageEvent):
+         """初始化 RSSHub Routes 知识库。"""
+         result = await _h.handle_rsshub_kb_init(self._deps)
+         if result.get("plain"):
+             yield event.plain_result(result["plain"])
+ 
+-    @filter.permission_type(filter.PermissionType.ADMIN)
+     @filter.command("rsshub_kb_sync", alias={"rss知识库同步", "RSS知识库同步"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def rsshub_kb_sync(self, event: AstrMessageEvent):
+         """启动 RSSHub Routes 知识库同步任务。"""
+         result = await _h.handle_rsshub_kb_sync(self._deps)
+         if result.get("plain"):
+             yield event.plain_result(result["plain"])
+ 
+-    @filter.permission_type(filter.PermissionType.ADMIN)
+     @filter.command(
+         "rsshub_kb_status", alias={"rss知识库同步状态", "RSS知识库同步状态"}
+     )
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def rsshub_kb_status(self, event: AstrMessageEvent):
+         """查看 RSSHub Routes 知识库状态。"""
+         result = await _h.handle_rsshub_kb_status(self._deps)
+         if result.get("plain"):
+             yield event.plain_result(result["plain"])
+ 
+-    @filter.permission_type(filter.PermissionType.ADMIN)
+     @filter.command(
+         "rsshub_kb_task", alias={"rss知识库近期同步任务", "RSS知识库近期同步任务"}
+     )
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def rsshub_kb_task(self, event: AstrMessageEvent):
+         """查看最近 RSSHub Routes 知识库同步任务。"""
+         result = _h.handle_rsshub_kb_task(self._deps)
+         if result.get("plain"):
+             yield event.plain_result(result["plain"])
+ 
+-    @filter.permission_type(filter.PermissionType.ADMIN)
+     @filter.command("sub_test", alias={"测试订阅"})
++    @filter.permission_type(filter.PermissionType.ADMIN)
+     async def test_sub(self, event: AstrMessageEvent, args: str = ""):
+         """管理员测试推送。
+ 

@@ -1,0 +1,45 @@
+--- a/main.py
++++ b/main.py
+@@ -1,6 +1,7 @@
+ # main.py
+ 
+ import asyncio
++from functools import wraps
+ import re
+ 
+ from astrbot.api import logger
+@@ -25,9 +26,18 @@
+ from .core.utils import extract_json_url
+ 
+ 
++def serialized_work(handler):
++    @wraps(handler)
++    async def run(self, *args, **kwargs):
++        async with self._parse_lock:
++            return await handler(self, *args, **kwargs)
++    return run
++
++
+ class ParserPlugin(Star):
+     def __init__(self, context: Context, config: AstrBotConfig):
+         super().__init__(context)
++        self._parse_lock = asyncio.Lock()
+         self.cfg = PluginConfig(config, context=context)
+         # 渲染器
+         self.renderer = Renderer(self.cfg)
+@@ -112,6 +122,7 @@
+         raise ValueError(f"未找到类型为 {parser_type} 的 parser 实例")
+ 
+     @filter.event_message_type(filter.EventMessageType.ALL)
++    @serialized_work
+     async def on_message(self, event: AstrMessageEvent):
+         """消息的统一入口"""
+         umo = event.unified_msg_origin
+@@ -264,6 +275,7 @@
+                 return await self.parser_map[kw].parse(kw, m)
+         raise ValueError(f"未匹配到支持的解析器: {url}")
+ 
++    @serialized_work
+     async def parse_and_send(self, event: AstrMessageEvent, url: str) -> bool:
+         """供其他插件调用的公开方法：解析指定 URL 并直接发送至 event 对应会话"""
+         result = await self.parse_url(url)

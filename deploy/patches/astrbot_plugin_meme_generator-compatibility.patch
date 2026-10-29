@@ -1,0 +1,83 @@
+--- a/core/meme_manager.py
++++ b/core/meme_manager.py
+@@ -1,7 +1,11 @@
+ """表情包管理器模块"""
+ 
+ import asyncio
++from functools import wraps
+ import shutil
++import hashlib
++import json
++from importlib.metadata import version
+ from pathlib import Path
+ from typing import Optional
+ from meme_generator.resources import check_resources
+@@ -19,6 +23,14 @@
+ from ..utils.resource_status import ResourceStatus
+ 
+ 
++def serialized_work(handler):
++    @wraps(handler)
++    async def run(self, *args, **kwargs):
++        async with self._generation_lock:
++            return await handler(self, *args, **kwargs)
++    return run
++
++
+ class ResourceNotReadyError(RuntimeError):
+     """Raised when meme resources are not ready for user-triggered generation."""
+ 
+@@ -28,6 +40,7 @@
+     
+     def __init__(self, config, data_dir: str = None):
+         self.config = config
++        self._generation_lock = asyncio.Lock()
+         self.template_manager = TemplateManager()
+         self.image_generator = ImageGenerator()
+         self.cooldown_manager = CooldownManager(config.cooldown_seconds)
+@@ -80,7 +93,8 @@
+             # returns immediately, which made us report resources as ready while
+             # downloads were still running. Execute the blocking checker in
+             # asyncio's worker thread so completion reflects the real state.
+-            await asyncio.to_thread(check_resources)
++            if not await asyncio.to_thread(self._local_resources_complete):
++                await asyncio.to_thread(check_resources)
+             await asyncio.to_thread(self._remove_legacy_resources)
+             await self.template_manager.refresh_templates()
+             all_memes = await self.template_manager.get_all_memes()
+@@ -104,6 +118,27 @@
+             except (asyncio.CancelledError, Exception):
+                 pass
+ 
++    def _local_resources_complete(self) -> bool:
++        # The default CDN is unreachable on this host; validated offline assets
++        # should not wait for a network scan on every bot restart.
++        if self.data_dir is None:
++            return False
++        root = self.data_dir / "resources"
++        manifest_path = root / "resources.json"
++        if not manifest_path.is_file():
++            return False
++        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
++        if manifest.get("version") != version("meme_generator"):
++            return False
++        for kind in ("fonts", "images"):
++            for entry in manifest[kind]:
++                target = (root / kind / entry["file"]).resolve()
++                if not target.is_relative_to(root.resolve()):
++                    raise ValueError("Invalid meme resource path")
++                if not target.is_file() or hashlib.sha256(target.read_bytes()).hexdigest() != entry["hash"]:
++                    return False
++        return True
++
+     def _remove_legacy_resources(self) -> None:
+         """Remove resources from the former user-home location after migration."""
+         if self.data_dir is None:
+@@ -208,6 +243,7 @@
+ 
+         return template_info
+     
++    @serialized_work
+     async def generate_meme(self, event: AstrMessageEvent) -> Optional[bytes]:
+         """
+         生成表情包主流程

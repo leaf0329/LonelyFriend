@@ -19,6 +19,8 @@ def main() -> None:
         proactive["friend_settings"]["session_list"] = [f"cuteq_qq:FriendMessage:{value}" for value in access["private_qq"]]
         proactive["group_settings"]["session_list"] = [f"cuteq_qq:GroupMessage:{value}" for value in access["group_qq"]]
         proactive.save_config()
+        from apply_extensions import update_extension_access
+        update_extension_access(ROOT, access)
     print(json.dumps({"valid": True, "applied": not args.check, "private_contacts": len(access["private_qq"]), "groups": len(access["group_qq"])}, ensure_ascii=False))
 
 

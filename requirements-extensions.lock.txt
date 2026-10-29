@@ -1,0 +1,16 @@
+meme_generator==0.2.3
+curl_cffi==0.14.0
+msgspec==0.22.0
+bilibili-api-python==17.4.2
+feedparser==6.0.14
+feedparser-sgmllib==2.1.0
+aiohttp_socks==0.12.0
+yt-dlp==2026.10.26
+gallery_dl==1.32.18
+cachetools==7.2.7
+yt-dlp-ejs==0.8.0
+brotli==1.2.1
+colorama==0.4.6
+mutagen==1.48.1
+pycryptodomex==3.24.1
+qrcode-terminal==0.8

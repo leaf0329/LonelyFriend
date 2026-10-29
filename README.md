@@ -14,6 +14,9 @@
 - **长消息保存**：将获准 QQ 来信的完整文字接入原文事务存储，避免普通采集路径截短消息。
 - **持续对话**：按 token 预算整理工作上下文，保留近期原文；不按固定 80 轮直接丢弃旧上下文。
 - **QQ 空间**：查看动态、生成草稿、发布说说；可选择开启带随机时间偏移的自动发布。
+- **联网与主动任务（可选）**：通过 DeepSeek 搜索和提取公开网页，使用 AstrBot 原生未来任务安排提醒与定时活动。
+- **公开见闻（可选）**：阅读科技、AI、游戏与动画 RSS，每个获准会话每天最多分享一次，夜间安静。
+- **互动与学习（可选）**：链接解析、模板表情制作，以及按开放群范围采集的黑话、表达与人格细节学习。
 - **后台运行**：Windows 隐藏启动、停止与名单应用入口，管理面板仅监听本机地址。
 
 ## 组成
@@ -51,7 +54,7 @@ py -3.12 -m venv .venv
 ```powershell
 $manifest = Get-Content sources.lock.json -Raw | ConvertFrom-Json
 New-Item -ItemType Directory -Path data/plugins -Force | Out-Null
-foreach ($pluginItem in $manifest.plugins) {
+foreach ($pluginItem in ($manifest.plugins | Where-Object { -not $_.optional })) {
     $pluginPath = Join-Path data/plugins $pluginItem.name
     git init $pluginPath
     git -C $pluginPath remote add origin $pluginItem.repository
@@ -143,6 +146,8 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 更多操作见 [使用说明](使用说明.md)。
 
+联网搜索、未来任务、RSS 见闻、链接解析、模板表情和群内自主学习的安装、入口与范围见 [扩展能力](docs/extensions.md)。扩展共用现有聊天进程，适用于现有 Ubuntu 部署；基础安装不会自动启用这些可选插件。
+
 ## 记忆与上下文
 
 记忆策略位于 [config/memory-policy.json](config/memory-policy.json)：
@@ -167,7 +172,7 @@ QQ 登录成功后，空间插件通过同一个 QQ 账号获取登录凭据，�
 
 首次初始化默认关闭自动发布和自动评论。服务器迁移时可显式选择 `--enable-qzone-publish`：每天北京时间 12:00、21:00 各安排一次发布，前后随机浮动 45 分钟，无需逐条审核。自动发布使用单独的公开任务提示，不读取私聊和群聊原文；模型输出仍需要结合实际使用观察。自动评论保持关闭。
 
-仓库只安装 QQ 聊天、主动聊天、记忆和 QQ 空间相关插件，不安装 B 站、小黑盒适配器。
+基础安装包含 QQ 聊天、主动聊天、记忆和 QQ 空间，不接入 B 站、小黑盒账号。可选扩展中的链接解析只在 QQ 内处理公开分享链接。扩展安装、日程、学习范围和资源要求见 [扩展能力](docs/extensions.md)。
 
 ## 数据与隐私
 

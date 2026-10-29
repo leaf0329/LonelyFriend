@@ -1,0 +1,20 @@
+{
+  "web_search_provider": "deepseek",
+  "daily_reading": {
+    "enabled": true,
+    "cron": "17 20 * * *",
+    "timezone": "Asia/Shanghai",
+    "targets": "allowlisted_private_and_groups"
+  },
+  "feeds": [
+    {"name": "IT之家", "topics": "科技、AI", "url": "https://www.ithome.com/rss/"},
+    {"name": "Solidot", "topics": "科技、AI、游戏", "url": "https://www.solidot.org/index.rss"},
+    {"name": "机核", "topics": "游戏、二次元", "url": "https://www.gcores.com/rss"},
+    {"name": "ACG17", "topics": "动画、二次元", "url": "https://acg17.com/feed"}
+  ],
+  "self_learning": {
+    "automatic_persona_updates": true,
+    "scope": "allowlisted_groups_only",
+    "interval_hours": 6
+  }
+}

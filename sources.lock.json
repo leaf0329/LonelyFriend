@@ -27,6 +27,13 @@
       "source": "plugins/astrbot_plugin_lonelyfriend_memory",
       "astrbot_version": "4.29.1",
       "memory_companion_version": "2.3.1"
+    },
+    {
+      "name": "astrbot_plugin_lonelyfriend_activities",
+      "version": "0.1.0",
+      "source": "plugins/astrbot_plugin_lonelyfriend_activities",
+      "astrbot_version": "4.29.1",
+      "optional": true
     }
   ],
   "plugins": [
@@ -48,6 +55,38 @@
       "version": "1.2.6",
       "repository": "https://github.com/Pancakes-Labs/astrbot_plugin_proactive_chat",
       "commit": "77a1d408ccd003a9d34ad4f51acfb8fc17bc35f5"
+    },
+    {
+      "name": "astrbot_plugin_rsshub",
+      "version": "2.1.4",
+      "repository": "https://github.com/AstrBot-Elementary-School/astrbot_plugin_rsshub",
+      "commit": "a047f46e47cb2a0f7a795f30b9f82ae027005846",
+      "patch": "deploy/patches/astrbot_plugin_rsshub-compatibility.patch",
+      "optional": true
+    },
+    {
+      "name": "astrbot_plugin_parser",
+      "version": "1.6.1",
+      "repository": "https://github.com/Zhalslar/astrbot_plugin_parser",
+      "commit": "e226dfd2250b4855ad67c29da7965353ad9e1379",
+      "patch": "deploy/patches/astrbot_plugin_parser-compatibility.patch",
+      "optional": true
+    },
+    {
+      "name": "astrbot_plugin_meme_generator",
+      "version": "2.3.2",
+      "repository": "https://github.com/SodaSizzle/astrbot_plugin_meme_generator",
+      "commit": "1d8eba9e2e340fcb8886d1d268d9a60e413b17c6",
+      "patch": "deploy/patches/astrbot_plugin_meme_generator-compatibility.patch",
+      "optional": true
+    },
+    {
+      "name": "astrbot_plugin_self_learning",
+      "version": "4.4.4",
+      "repository": "https://github.com/NickCharlie/astrbot_plugin_self_learning",
+      "commit": "7b747c9a18f09485feca8d1e61e5f2226dde8d39",
+      "patch": "deploy/patches/astrbot_plugin_self_learning-compatibility.patch",
+      "optional": true
     }
   ],
   "python_linux": "3.12.3"
