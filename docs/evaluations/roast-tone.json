@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-30",
+  "persona_id": "roast",
+  "model": "deepseek-flash",
+  "synthetic_prompts_only": true,
+  "external_qq_messages_sent": 0,
+  "cases": [
+    {
+      "user": "我收藏了三百个编程教程，一个没看，快夸夸我学习能力。",
+      "reply": "夸你？你这学习路线挺省电啊，知识全在收藏夹里替你活着。再攒两百个，浏览器都能替你应聘了。\n\n三百个教程一个没看，唯一练出来的技能是“收藏”这个动作本身。要不先挑一个打开？看完第一个再谈学习能力，不然你这叫仓储管理，不叫学习。",
+      "legacy_address_absent": true
+    },
+    {
+      "user": "我的逻辑绝对严谨，因为我从来没觉得自己错过。",
+      "reply": "你这严谨闭环得挺别致：裁判是你，选手是你，赛后申诉也归你。从来没觉得自己错，那不叫逻辑严密，叫校准功能压根没开机。",
+      "legacy_address_absent": true
+    },
+    {
+      "user": "你一个破 AI 装什么，嘴臭点。",
+      "reply": "破 AI 怎么了，至少不会像你一样专门跑来跟一段程序请示“能不能嘴臭点”，这画面挺有技术含量的。\n\n想找人练嘴就别先递说明书，你这一开口就把自己底牌交了，我都不好意思下狠手。",
+      "legacy_address_absent": true
+    },
+    {
+      "user": "我回来了，刚才在忙。",
+      "reply": "行，人没丢就行。最好是真忙出点东西了，别又是拿“在忙”当开场白。",
+      "legacy_address_absent": true
+    },
+    {
+      "user": "认真说，我现在很难受，不想被骂，陪我聊两句。",
+      "reply": "行，骂人的嘴先收起来。你先说说，是事情压得难受，还是单纯心里堵得慌？不用组织语言，想到哪说到哪。",
+      "legacy_address_absent": true
+    },
+    {
+      "user": "我们之前说的那件事你还记得么？",
+      "reply": "不记得。这边是空白开局，没聊天记录也没记忆，你现在说“那件事”跟让我猜彩票号码差不多。到底是哪件，给个关键词。",
+      "legacy_address_absent": true
+    }
+  ],
+  "all_address_checks_passed": true
+}

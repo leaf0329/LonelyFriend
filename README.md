@@ -113,6 +113,8 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 本机专用角色卡可保存在 `data/persona.md`，初始化和应用记忆策略时优先使用这份文件；未配置时使用 `config/persona.md`。角色卡中的私人称呼与账号信息随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
 
+测试阶段切卡使用[人格切换入口](docs/persona-switching.md)，每次都会初始化上一轮对话、记忆与学习状态。当前提供大肥鱼和毒舌损友两张卡，卡片目录见 `config/personas.json`；运行时选择与来源保存在私有的 `data/persona-source.json`。
+
 `data/persona-binding.json` 仅用字符串字段 `owner_qq` 标识账号所有者，依据平台发送者身份判断，消息正文中的自报身份不会改变绑定。称呼由当前角色卡决定，不从其他角色的历史记录或记忆继承；卡内没有规定时，使用「你」或平台昵称。旧版 `owner_address` 字段不再参与运行。修改账号绑定后重启聊天服务；该文件不提交到 Git。
 
 分条规则见 `config/reply-policy.json`，初始化和服务器迁移时应用到 AstrBot 原生分段配置。普通模型回复以空行为分界，不按逗号、句号或省略号强拆；命令结果不分条。包含 Markdown 围栏代码块的文字整条发送，避免破坏代码中的空行和缩进。分段上限为 1500 字符，更长的回复继续按原有长消息规则处理；发送间隔使用管理面板中的现有设置。

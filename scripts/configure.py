@@ -44,6 +44,11 @@ def load_persona_prompt() -> str:
     return source.read_text(encoding="utf-8-sig")
 
 
+def selected_persona_id() -> str:
+    source = ROOT / "data/persona-source.json"
+    return read_json(source).get("persona_id", "dafeiyu") if source.is_file() else "dafeiyu"
+
+
 def apply_context_policy(config: dict) -> None:
     policy = read_json(ROOT / "config/memory-policy.json")
     for provider in config["provider"]:
@@ -132,10 +137,11 @@ async def set_persona(prompt: str, tools: list[str]) -> None:
     db = SQLiteDatabase(str(ROOT / "data/data_v4.db"))
     try:
         await db.initialize()
-        if await db.get_persona_by_id("dafeiyu"):
-            await db.update_persona("dafeiyu", system_prompt=prompt, tools=tools, skills=[])
+        persona_id = selected_persona_id()
+        if await db.get_persona_by_id(persona_id):
+            await db.update_persona(persona_id, system_prompt=prompt, tools=tools, skills=[])
         else:
-            await db.insert_persona("dafeiyu", prompt, tools=tools, skills=[])
+            await db.insert_persona(persona_id, prompt, tools=tools, skills=[])
     finally:
         await db.engine.dispose()
 
@@ -168,7 +174,7 @@ def main() -> None:
         "custom_extra_body": {"reasoning_effort": "none"},
     }]
     config["agent_runner"]["config"]["model"].update(provider_id=PROVIDER_ID, request_max_retries=1)
-    config["agent_runner"]["config"]["persona"]["persona_id"] = "dafeiyu"
+    config["agent_runner"]["config"]["persona"]["persona_id"] = selected_persona_id()
     apply_context_policy(config)
     configure_local_embedding(config)
     config["agent_runner"]["config"]["misc"]["max_steps"] = 12
@@ -256,7 +262,7 @@ def main() -> None:
         "账号尚未扫码登录；公开发布功能尚未启用。\n"
     )
     (ROOT / "data/登录信息.txt").write_text(login, encoding="utf-8-sig")
-    print(json.dumps({"configured": True, "model": private["model"]["model"], "persona": "dafeiyu", "private_contacts": len(access["private_qq"]), "groups": len(access["group_qq"]), "memory_tools": tools}, ensure_ascii=False))
+    print(json.dumps({"configured": True, "model": private["model"]["model"], "persona": selected_persona_id(), "private_contacts": len(access["private_qq"]), "groups": len(access["group_qq"]), "memory_tools": tools}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

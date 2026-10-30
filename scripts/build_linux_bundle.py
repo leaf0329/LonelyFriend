@@ -17,7 +17,7 @@ PLUGINS = (
 )
 PRIVATE_FILES = (
     "cmd_config.json", "cuteq-private.json", "cuteq-access.json",
-    "persona.md", "persona-binding.json", "mcp_server.json",
+    "persona.md", "persona-source.json", "persona-binding.json", "mcp_server.json",
 )
 
 

@@ -40,6 +40,7 @@ def write(path: Path, value):
 
 
 def configure_addons(root: Path, policy: dict, access: dict):
+    persona_id = read(root / "data/cmd_config.json")["agent_runner"]["config"]["persona"]["persona_id"]
     origins = ([f"cuteq_qq:FriendMessage:{v}" for v in access["private_qq"]]
                + [f"cuteq_qq:GroupMessage:{v}" for v in access["group_qq"]])
     for name in NEW_PLUGINS:
@@ -68,7 +69,7 @@ def configure_addons(root: Path, policy: dict, access: dict):
                 enable_message_capture=True, enable_auto_learning=True, enable_jargon_learning=True,
                 enable_style_learning=True, jargon_websearch_enabled=False)
             config["Target_Settings"].update(target_qq_list=[f"group_{v}" for v in access["group_qq"]] or ["group___no_allowed_groups__"],
-                                             current_persona_name="dafeiyu")
+                                             current_persona_name=persona_id)
             config["Model_Configuration"].update(filter_provider_id="cuteq-deepseek-flash",
                 refine_provider_id="cuteq-deepseek-flash", reinforce_provider_id="cuteq-deepseek-flash")
             config["Database_Settings"]["db_type"] = "sqlite"

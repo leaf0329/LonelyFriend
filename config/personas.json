@@ -1,0 +1,12 @@
+{
+  "dafeiyu": {
+    "name": "大肥鱼 v2.1",
+    "prompt": "persona.md",
+    "source": "persona-source.json"
+  },
+  "roast": {
+    "name": "毒舌损友 · 测试版",
+    "prompt": "personas/roast.md",
+    "source": "personas/roast-source.json"
+  }
+}

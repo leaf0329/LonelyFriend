@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-30",
+  "mode": "testing",
+  "active_persona": "roast",
+  "external_qq_test_messages_sent": 0,
+  "chat_rows": {
+    "conversations": 0,
+    "platform_message_history": 0,
+    "umo_aliases": 0
+  },
+  "memory_rows": {
+    "memories": 0,
+    "timeline": 0,
+    "capture_sources": 0,
+    "source_semantic_documents": 0
+  },
+  "learning_rows": {
+    "raw_messages": 0,
+    "bot_messages": 0,
+    "persona_backups": 0,
+    "persona_update_reviews": 0
+  },
+  "cached_space_posts": 0,
+  "daily_jobs": 2,
+  "learning_page_errors": {},
+  "qzone_all_prompts_switched": true,
+  "qzone_schedule": "0 12,21 * * *",
+  "learning_persona": "roast",
+  "temporary_rollback_removed": true
+}
