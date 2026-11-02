@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NEW_PLUGINS = ("astrbot_plugin_rsshub", "astrbot_plugin_parser", "astrbot_plugin_meme_generator", "astrbot_plugin_self_learning")
 ACTIVITY_PLUGIN = "astrbot_plugin_lonelyfriend_activities"
 EXTRA_TOOLS = {"web_search_deepseek", "deepseek_fetch_web_page", "future_task", "parse_media_url",
-               "lonelyfriend_read_feeds", "lonelyfriend_make_meme", "lonelyfriend_share_news", "rss_list_subscriptions", "rss_list_push_history"}
+               "lonelyfriend_read_feeds", "lonelyfriend_read_hot_topics", "lonelyfriend_make_meme", "lonelyfriend_share_news", "rss_list_subscriptions", "rss_list_push_history"}
 
 
 def apply_addon_patches(root: Path):

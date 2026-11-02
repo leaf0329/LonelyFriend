@@ -30,7 +30,7 @@
     },
     {
       "name": "astrbot_plugin_lonelyfriend_activities",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "source": "plugins/astrbot_plugin_lonelyfriend_activities",
       "astrbot_version": "4.29.1",
       "optional": true

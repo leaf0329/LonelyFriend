@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-02",
+  "plugin_version": "0.1.1",
+  "sources": {
+    "百度热搜": {
+      "live_candidates": 20
+    },
+    "B站热搜": {
+      "live_candidates": 20
+    }
+  },
+  "selection": {
+    "max_rank": 20,
+    "positive_platform_heat_required": true,
+    "max_board_age_minutes": 30,
+    "rss_is_daily_fallback": false,
+    "skip_without_suitable_topic": true,
+    "public_fact_check_tools_allowed": true
+  },
+  "checks": {
+    "targeted_passed": 10,
+    "unchanged_optional_learning_checks_skipped": 3,
+    "source_outage_and_empty_board_covered": true,
+    "stale_or_unranked_candidates_blocked": true,
+    "concurrency_and_daily_limit_preserved": true,
+    "private_memory_and_generic_send_tools_excluded": true
+  },
+  "deployment": {
+    "active_plugins": 9,
+    "managed_news_jobs": 3,
+    "existing_delivery_ledger_preserved": true,
+    "persona_preserved": true,
+    "external_test_messages_sent": false
+  },
+  "first_scheduled_delivery_with_new_selection_verified": false
+}
