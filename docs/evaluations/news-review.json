@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-02",
+  "plugin_version": "0.2.0",
+  "scope": "daily_hot_topic_group_shares_only",
+  "workflow": {
+    "private_review_required": true,
+    "approver_identity_bound_to_actual_private_sender": true,
+    "immutable_body_and_group": true,
+    "unreviewed_or_rejected_never_sent": true,
+    "review_deadline": "23:00 Asia/Shanghai on creation day",
+    "uncertain_delivery_is_not_retried": true,
+    "news_jobs_require_healthy_plugin": true,
+    "group_draft_context_isolated": true
+  },
+  "records": {
+    "private_sqlite": true,
+    "records_survive_persona_reset": true,
+    "pending_drafts_invalidated_after_reset": true,
+    "selection_evidence_and_human_reason_retained": true,
+    "approval_distinct_from_delivery_result": true,
+    "included_in_private_migration_snapshot": true
+  },
+  "checks": {
+    "review_checks_passed": 18,
+    "existing_extension_checks_passed": 10,
+    "migration_checks_passed": 1,
+    "unchanged_optional_checks_skipped": 3,
+    "mock_transport_used_for_review_notifications_and_group_sends": true
+  },
+  "external_qq_demo_messages_sent": 0,
+  "live_human_review_and_delivery_verified": false,
+  "deployment": {
+    "active_plugins": 9,
+    "admin_review_commands": 6,
+    "managed_news_jobs": 3,
+    "isolated_group_jobs": 2,
+    "native_startup_auto_restore_disabled": true,
+    "reviewer_configuration_valid": true,
+    "private_audit_database_initialized": true,
+    "real_review_records_at_deployment": 0,
+    "persona_and_existing_delivery_ledger_preserved": true
+  }
+}

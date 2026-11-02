@@ -6,6 +6,7 @@ import json
 import sqlite3
 import subprocess
 import tarfile
+from contextlib import closing
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,13 +19,14 @@ PLUGINS = (
 PRIVATE_FILES = (
     "cmd_config.json", "cuteq-private.json", "cuteq-access.json",
     "persona.md", "persona-source.json", "persona-binding.json", "mcp_server.json",
+    "news-review.json",
 )
 
 
 def sqlite_snapshot(source: Path, destination: Path) -> dict:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(source.as_uri() + "?mode=ro", uri=True) as origin:
-        with sqlite3.connect(destination) as target:
+    with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as origin:
+        with closing(sqlite3.connect(destination)) as target:
             origin.backup(target)
             if target.execute("PRAGMA quick_check").fetchone()[0] != "ok":
                 raise RuntimeError(f"SQLite snapshot failed verification: {source.name}")
@@ -71,6 +73,7 @@ def main() -> None:
     for name in PRIVATE_FILES:
         include(ROOT / "data" / name)
     include(ROOT / "data/data_v4.db")
+    include(ROOT / "data/plugin_data/astrbot_plugin_lonelyfriend_activities/news-review.db")
     for name in PLUGINS:
         plugin_source = ROOT / ("plugins" if name == "astrbot_plugin_lonelyfriend_memory" else "data/plugins") / name
         include(plugin_source, Path("data/plugins") / name)

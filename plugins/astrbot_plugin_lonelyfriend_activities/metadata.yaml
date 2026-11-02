@@ -1,6 +1,6 @@
 name: astrbot_plugin_lonelyfriend_activities
 display_name: LonelyFriend 见闻与互动
-desc: 真实热榜选题与每日分享、RSS阅读和模板表情工具
-version: v0.1.1
+desc: 真实热榜选题、群分享人工审核与记录、RSS阅读和模板表情工具
+version: v0.2.0
 author: leaf0329
 astrbot_version: ">=4.29.1"
