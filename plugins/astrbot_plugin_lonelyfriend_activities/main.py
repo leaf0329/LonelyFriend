@@ -18,10 +18,13 @@ from astrbot.api.provider import ProviderRequest
 from astrbot.api.star import Context, Star, register
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 from astrbot.core.star.filter.command import GreedyStr
+from astrbot.core.star import command_management
+from astrbot.core.star.filter.permission import COMMAND_PERMISSION_TYPES, PermissionTypeFilter
 
 from .reading import PublicFeedReader
 from .hot_topics import PublicHotReader, eligible_topics
 from .reviews import ReviewStore
+from .command_menu import REVIEW_HANDLERS, render_menu, visible_commands
 
 MANAGED_JOB = "lonelyfriend_public_reading_v1"
 READING_NOTE = """这是一次每日热点选题与分享任务，不是用户刚发来的聊天。
@@ -40,7 +43,7 @@ READING_NOTE = """这是一次每日热点选题与分享任务，不是用户�
 这是已有任务的一次执行，不要创建、修改或复制定时任务。"""
 
 
-@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "公开热点、审核分享与模板表情", "0.2.0")
+@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "公开热点、审核分享与命令菜单", "0.2.1")
 class LonelyFriendActivities(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -114,6 +117,36 @@ class LonelyFriendActivities(Star):
         access = json.loads((self.data / "cuteq-access.json").read_text(encoding="utf-8-sig"))
         return ([f"cuteq_qq:FriendMessage:{v}" for v in access["private_qq"]]
                 + [f"cuteq_qq:GroupMessage:{v}" for v in access["group_qq"]])
+
+    @filter.command("菜单", alias={"命令菜单", "功能菜单"})
+    async def command_menu(self, event: AstrMessageEvent, query: GreedyStr):
+        """按分类、关键词或页码查看实时命令菜单。"""
+        items = await command_management.list_commands()
+        config = self.context.get_config(umo=event.unified_msg_origin)
+        reviewer = self.is_reviewer(event)
+
+        def permitted(item):
+            if not item["reserved"] and "*" not in config["plugin_set"] and item["plugin"] not in config["plugin_set"]:
+                return False
+            if item["plugin"] == "astrbot_plugin_lonelyfriend_activities" and item["handler_name"] in REVIEW_HANDLERS and not reviewer:
+                return False
+            if not event.is_admin() and "仅限Bot管理员" in item["description"]:
+                return False
+            permission = item["permission"]
+            return permission == "everyone" or PermissionTypeFilter(COMMAND_PERMISSION_TYPES[permission], raise_error=False).filter(event, config)
+
+        entries = visible_commands(items, permitted)
+        entry = next(item["effective_command"] for item in entries
+                     if item["plugin"] == "astrbot_plugin_lonelyfriend_activities" and item["handler_name"] == "command_menu")
+        prefix = config["wake_prefix"][0] if config["wake_prefix"] else ""
+        hints = ["热榜/RSS：看看今天有什么热点"]
+        if config["provider_settings"]["web_search"]:
+            hints.append("联网：先搜索这个问题，并附来源")
+        if config["provider_settings"]["proactive_capability"]["add_cron_tools"]:
+            hints.append("提醒：明天晚上八点提醒我……")
+        if any(item["plugin"] == "astrbot_plugin_meme_generator" for item in entries):
+            hints.append("表情：帮我做一张举牌表情")
+        yield event.plain_result(render_menu(entries, query, prefix=prefix, entry_command=entry, capability_hints=hints)).use_t2i(False)
 
     def plugin(self, name: str):
         metadata = next((s for s in self.context.get_all_stars()
