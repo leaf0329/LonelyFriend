@@ -189,7 +189,7 @@ def switch_and_reset(root: Path, persona_id: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Switch a test persona and initialize chat, memory and learned state. Stop the chat service first.")
-    parser.add_argument("persona_id", help="Card ID in config/personas.json, e.g. dafeiyu or roast")
+    parser.add_argument("persona_id", help="Card ID in config/personas.json")
     parser.add_argument("--root", type=Path, default=ROOT)
     arguments = parser.parse_args()
     print(json.dumps(switch_and_reset(arguments.root, arguments.persona_id), ensure_ascii=False, indent=2))

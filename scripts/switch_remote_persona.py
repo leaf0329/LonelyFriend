@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import msvcrt
 import shlex
 import subprocess
@@ -11,7 +12,6 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULT = ROOT / "data/人格切换结果.txt"
-NAMES = {"roast": "毒舌损友", "dafeiyu": "大肥鱼"}
 
 
 def write_result(text: str):
@@ -20,8 +20,10 @@ def write_result(text: str):
 
 
 def main():
+    catalog = json.loads((ROOT / "config/personas.json").read_text(encoding="utf-8-sig"))
+    names = {key: card["name"] for key, card in catalog.items()}
     parser = argparse.ArgumentParser(description="Switch a server test persona in the background and initialize prior chat and memory.")
-    parser.add_argument("persona_id", choices=sorted(NAMES))
+    parser.add_argument("persona_id", choices=sorted(names))
     argument = parser.parse_args()
     with (ROOT / "data/server-restart.lock").open("a+b") as lock:
         if not lock.seek(0, 2):
@@ -32,7 +34,7 @@ def main():
             msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
         except OSError:
             return 0
-        write_result("正在切换到“" + NAMES[argument.persona_id] + "”，并初始化服务器上的旧测试对话、记忆和学习状态。")
+        write_result("正在切换到“" + names[argument.persona_id] + "”，并初始化服务器上的旧测试对话、记忆和学习状态。")
         command = ("cd /opt/lonelyfriend\nPYTHONPATH=/opt/lonelyfriend/extensions/python "
                    ".venv/bin/python scripts/switch_server_persona.py " + shlex.quote(argument.persona_id) + "\n")
         try:
@@ -45,7 +47,7 @@ def main():
         if result.returncode:
             write_result("切换未完成或检查未通过，请查看以下原因。\n\n" + (result.stderr.strip() or result.stdout.strip()))
             return 1
-        write_result("已切换到“" + NAMES[argument.persona_id] + "”，本轮测试数据已初始化，聊天服务检查通过。\n\n" + result.stdout.strip())
+        write_result("已切换到“" + names[argument.persona_id] + "”，本轮测试数据已初始化，聊天服务检查通过。\n\n" + result.stdout.strip())
         return 0
 
 

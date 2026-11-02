@@ -42,19 +42,19 @@ class ServerPersonaSwitchTests(unittest.TestCase):
         with closing(sqlite3.connect(self.root / "data/data_v4.db")) as database:
             self.assertEqual(database.execute("SELECT count(*) FROM conversations").fetchone()[0], 1)
         self.assertTrue((self.root / "data/plugin_data/astrbot_plugin_memory_companion/old-content.json").exists())
-        self.assertEqual(self.module.read(self.root / "data/cmd_config.json")["agent_runner"]["config"]["persona"]["persona_id"], "dafeiyu")
+        self.assertEqual(self.module.read(self.root / "data/cmd_config.json")["agent_runner"]["config"]["persona"]["persona_id"], "previous")
 
     def test_incomplete_backup_never_deletes_original_paths(self):
         with self.mocks(), patch.object(self.module.shutil, "copytree", side_effect=OSError("disk full")):
             with self.assertRaisesRegex(OSError, "disk full"):
-                self.module.switch_server(self.root, "roast")
+                self.module.switch_server(self.root, "replacement")
         self.assert_original_data()
 
     def test_failed_startup_restores_prior_chat_config_and_memory(self):
         clock = SimpleNamespace(monotonic=Mock(side_effect=[0, 111]), sleep=Mock())
         with self.mocks(), patch.object(self.module, "time", clock), patch.object(self.module.httpx, "Client"):
             with self.assertRaisesRegex(RuntimeError, "did not become healthy"):
-                self.module.switch_server(self.root, "roast")
+                self.module.switch_server(self.root, "replacement")
         self.assert_original_data()
 
 

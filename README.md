@@ -2,7 +2,7 @@
 
 面向长期陪伴的 QQ 角色聊天项目，基于 AstrBot、NapCat 和 DeepSeek 构建。支持指定好友私聊、群聊接话、长期记忆和 QQ 空间。
 
-项目重点是让角色在长期交谈中保留具体经历、识别人和事件的区别，并在需要时回查原始对话。默认角色为“大肥鱼”，可以自行修改人设。
+项目重点是让角色在长期交谈中保留具体经历、识别人和事件的区别，并在需要时回查原始对话。角色卡由使用者自行提供，正文与私人信息保存在本机。
 
 ## 功能
 
@@ -93,6 +93,8 @@ Copy-Item config/cuteq-private.example.json data/cuteq-private.json
 py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
+先将角色正文保存为 UTF-8 编码的 `data/persona.md`；导出包中的文件分隔标记和 JSON 资料不属于正文。角色目录见 `config/personas.json`。角色正文不随公开仓库分发。
+
 初始化后启动：
 
 ```powershell
@@ -109,11 +111,9 @@ py -3.12 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 `configure.py` 用于首次初始化，会写入初始模型、平台、人设和插件设置。日常应用名单使用下方入口；单独更新本项目记忆策略使用 `scripts/apply_memory_policy.py`，执行前停止服务，完成后重新启动。
 
-预置角色基于 [dafeiyu-astrbot 的大肥鱼 QQ 人格 v2.1](https://github.com/whyever77/dafeiyu-astrbot)，适配为直接聊天台词，并接入本项目的原文回查与身份绑定。来源和改动记录在 `config/persona-source.json`，上游 MIT 许可保存在 `docs/licenses/dafeiyu-persona-MIT.txt`。
+初始化和应用记忆策略时使用 `data/persona.md`，不回退到历史角色。角色卡中的私人称呼、账号信息和来源资料随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
 
-本机专用角色卡可保存在 `data/persona.md`，初始化和应用记忆策略时优先使用这份文件；未配置时使用 `config/persona.md`。角色卡中的私人称呼与账号信息随 `data/` 留在本机。日常启动不会覆盖管理面板中的人格修改。
-
-测试阶段切卡使用[人格切换入口](docs/persona-switching.md)，每次都会初始化上一轮对话、记忆与学习状态。当前提供大肥鱼和毒舌损友两张卡，卡片目录见 `config/personas.json`；运行时选择与来源保存在私有的 `data/persona-source.json`。
+测试阶段切卡使用[人格切换入口](docs/persona-switching.md)，每次都会初始化上一轮对话、记忆与学习状态。卡片目录见 `config/personas.json`；运行时选择与来源保存在私有的 `data/persona-source.json`。
 
 `data/persona-binding.json` 仅用字符串字段 `owner_qq` 标识账号所有者，依据平台发送者身份判断，消息正文中的自报身份不会改变绑定。称呼由当前角色卡决定，不从其他角色的历史记录或记忆继承；卡内没有规定时，使用「你」或平台昵称。旧版 `owner_address` 字段不再参与运行。修改账号绑定后重启聊天服务；该文件不提交到 Git。
 

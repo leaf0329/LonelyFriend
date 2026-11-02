@@ -39,14 +39,17 @@ def write_json(path: Path, value) -> None:
 
 
 def load_persona_prompt() -> str:
-    local_persona = ROOT / "data/persona.md"
-    source = local_persona if local_persona.is_file() else ROOT / "config/persona.md"
-    return source.read_text(encoding="utf-8-sig")
+    return (ROOT / "data/persona.md").read_text(encoding="utf-8-sig")
 
 
 def selected_persona_id() -> str:
     source = ROOT / "data/persona-source.json"
-    return read_json(source).get("persona_id", "dafeiyu") if source.is_file() else "dafeiyu"
+    if source.is_file():
+        return read_json(source)["persona_id"]
+    catalog = read_json(ROOT / "config/personas.json")
+    if len(catalog) != 1:
+        raise ValueError("Select a persona in data/persona-source.json before configuring")
+    return next(iter(catalog))
 
 
 def apply_context_policy(config: dict) -> None:

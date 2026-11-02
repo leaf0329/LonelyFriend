@@ -18,7 +18,7 @@ import httpx
 import psutil
 from websockets.asyncio.client import connect
 
-from configure import ROOT, apply_context_policy, apply_memory_policy, load_persona_prompt, memory_tools, read_baseline_config, read_json, write_json
+from configure import ROOT, apply_context_policy, apply_memory_policy, load_persona_prompt, memory_tools, read_baseline_config, read_json, selected_persona_id, write_json
 from astrbot.core.db.sqlite import SQLiteDatabase
 
 
@@ -26,7 +26,7 @@ async def persona(path):
     database = SQLiteDatabase(str(path))
     try:
         await database.initialize()
-        await database.insert_persona("dafeiyu", load_persona_prompt(), tools=memory_tools(), skills=[])
+        await database.insert_persona(selected_persona_id(), load_persona_prompt(), tools=memory_tools(), skills=[])
     finally:
         await database.engine.dispose()
 

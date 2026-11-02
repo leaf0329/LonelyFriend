@@ -6,32 +6,26 @@
 
 | ID | 角色 | 来源 |
 | --- | --- | --- |
-| `dafeiyu` | 大肥鱼 v2.1 | 原有社区卡的 LonelyFriend 适配版 |
-| `roast` | 毒舌损友 · 测试版 | 根据强攻击性、对线、反讽需求编写的原创测试卡 |
+| `default` | 孙吧 · 小鲸鱼 | 用户提供的私有人设卡 |
 
-卡片位置和显示名称记录在 `config/personas.json`。`roast` 使用“我”和“你”或平台昵称，不沿用其他角色的“主人”“呆货”等称呼。
+卡片位置和显示名称记录在 `config/personas.json`，正文与来源保存在被 Git 忽略的 `data/persona.md`、`data/persona-source.json`。原有角色卡和专用切换入口已移除。使用 `default` 槽位保存当前卡，避免 AstrBot 启动时另外补建内置默认卡。
 
 ## Windows 后台入口
 
-在已经配置好本项目服务器 SSH 连接的电脑上，双击项目根目录：
-
-- `切换毒舌并初始化.vbs`
-- `切换大肥鱼并初始化.vbs`
-
-入口不会弹出终端或浏览器。执行进度和结果写入 `data/人格切换结果.txt`；切换期间聊天服务会短暂停止。名称中的“初始化”表示旧测试数据会被清空，不能将它当作普通的无损人格切换按钮。
-
-也可以运行：
+在已经配置好本项目服务器 SSH 连接的电脑上运行：
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/switch_remote_persona.py roast
+.\.venv\Scripts\python.exe scripts/switch_remote_persona.py default
 ```
+
+执行进度和结果写入 `data/人格切换结果.txt`。此入口会初始化旧测试数据并启动聊天服务；如果正在停机编写角色卡，先只修改文件，等待需要恢复运行时再使用入口。
 
 ## Ubuntu 入口
 
 在服务器项目目录运行：
 
 ```bash
-sudo env PYTHONPATH=/opt/lonelyfriend/extensions/python .venv/bin/python scripts/switch_server_persona.py roast
+sudo env PYTHONPATH=/opt/lonelyfriend/extensions/python .venv/bin/python scripts/switch_server_persona.py default
 ```
 
 服务器入口先停聊天服务，再执行初始化并启动，检查插件和所选人设。切换前生成临时受限副本；启动检查失败时恢复原状态，成功后删除本次临时副本。QQ 登录进程不需要重启。

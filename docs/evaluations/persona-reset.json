@@ -1,30 +1,39 @@
 {
-  "date": "2026-10-30",
+  "date": "2026-11-02",
   "mode": "testing",
-  "active_persona": "roast",
-  "external_qq_test_messages_sent": 0,
+  "active_persona": "default",
+  "persona_name": "孙吧 · 小鲸鱼",
+  "persona_ids": [
+    "default"
+  ],
+  "prompt_characters": 4857,
+  "prompt_matches_imported_body": true,
+  "removed_personas": [
+    "dafeiyu",
+    "roast"
+  ],
+  "old_default_replaced": true,
   "chat_rows": {
-    "conversations": 0,
+    "session_project_relations": 0,
+    "attachments": 0,
+    "webchat_threads": 0,
+    "platform_sessions": 0,
+    "chatui_projects": 0,
     "platform_message_history": 0,
+    "conversations": 0,
     "umo_aliases": 0
   },
-  "memory_rows": {
-    "memories": 0,
-    "timeline": 0,
-    "capture_sources": 0,
-    "source_semantic_documents": 0
+  "memory_state_removed": true,
+  "learning_state_removed": true,
+  "cached_space_posts_removed": true,
+  "public_and_proactive_prompts_updated": true,
+  "accounts_permissions_and_limits_preserved": true,
+  "persona_manager_initialization_passed": true,
+  "services": {
+    "lonelyfriend": "inactive",
+    "lonelyfriend-napcat": "inactive"
   },
-  "learning_rows": {
-    "raw_messages": 0,
-    "bot_messages": 0,
-    "persona_backups": 0,
-    "persona_update_reviews": 0
-  },
-  "cached_space_posts": 0,
-  "daily_jobs": 2,
-  "learning_page_errors": {},
-  "qzone_all_prompts_switched": true,
-  "qzone_schedule": "0 12,21 * * *",
-  "learning_persona": "roast",
+  "external_qq_test_messages_sent": 0,
+  "live_chat_test_performed": false,
   "temporary_rollback_removed": true
 }
