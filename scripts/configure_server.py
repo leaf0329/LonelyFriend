@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import json
 
-from configure import ROOT, apply_access, apply_qzone_patch, apply_reply_policy, read_json, write_json
+from configure import ROOT, apply_access, apply_proactive_reply_policy, apply_qzone_patch, apply_reply_policy, read_json, write_json
 from astrbot.core.db.sqlite import SQLiteDatabase
 
 
@@ -37,6 +37,11 @@ def main() -> None:
     config["plugin_set"] = ["*"]
     config["timezone"] = "Asia/Shanghai"
     write_json(config_path, config)
+
+    proactive_path = ROOT / "data/config/astrbot_plugin_proactive_chat_config.json"
+    proactive = read_json(proactive_path)
+    apply_proactive_reply_policy(proactive)
+    write_json(proactive_path, proactive)
 
     qzone_path = ROOT / "data/config/astrbot_plugin_qzone_config.json"
     qzone = read_json(qzone_path)

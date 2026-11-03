@@ -73,6 +73,15 @@ def apply_reply_policy(config: dict) -> None:
     config["platform_settings"]["segmented_reply"].update(read_json(ROOT / "config/reply-policy.json"))
 
 
+def apply_proactive_reply_policy(config: dict) -> None:
+    policy = read_json(ROOT / "config/reply-policy.json")
+    settings = {key: policy[key] for key in ("enable", "split_mode", "regex", "words_count_threshold")}
+    # ProactiveChat keeps regex delimiters; remove padding at paragraph boundaries only.
+    settings.update(enable_content_cleanup=True, content_cleanup_rule=r"\A\s+|\s+\Z")
+    for scope in ("friend_settings", "group_settings"):
+        config[scope]["segmented_reply_settings"].update(settings)
+
+
 def configure_local_embedding(config: dict) -> None:
     provider = read_json(ROOT / "config/memory-policy.json")["embedding_provider"]
     config["provider"] = [item for item in config["provider"] if item["id"] != provider["id"]] + [provider]
@@ -226,6 +235,7 @@ def main() -> None:
     for kind, access_key, event_type in (("friend_settings", "private_qq", "FriendMessage"), ("group_settings", "group_qq", "GroupMessage")):
         proactive[kind]["session_list"] = [f"{QQ_PLATFORM_ID}:{event_type}:{v}" for v in access[access_key]]
         proactive[kind]["proactive_prompt"] = prompt + "\n结合最近的话题与当前时间，自然地说一句有实际内容的话；没有值得说的内容时不要硬凑，不催促对方回复。"
+    apply_proactive_reply_policy(proactive)
     proactive.save_config()
 
     qzone = plugin_config("astrbot_plugin_qzone")

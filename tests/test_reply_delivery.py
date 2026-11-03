@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from configure import apply_reply_policy
+from configure import apply_proactive_reply_policy, apply_reply_policy
 from plugins.astrbot_plugin_lonelyfriend_memory.main import LonelyFriendMemory
 from astrbot.api.provider import LLMResponse
 from astrbot.core.config.default import DEFAULT_CONFIG
@@ -24,9 +24,13 @@ from astrbot.core.platform.message_type import MessageType
 from astrbot.core.platform.platform_metadata import PlatformMetadata
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
 
+HAS_PROACTIVE = (ROOT / "data/plugins/astrbot_plugin_proactive_chat/core/services/sender_service.py").is_file()
+if HAS_PROACTIVE:
+    from data.plugins.astrbot_plugin_proactive_chat.core.services.sender_service import SenderService
+
 
 class ReplyDeliveryTests(unittest.IsolatedAsyncioTestCase):
-    async def deliver(self, text, *, group=False, command=False, tool_preamble=False):
+    async def deliver(self, text, *, group=False, command=False, tool_preamble=False, proactive=False):
         config = copy.deepcopy(DEFAULT_CONFIG)
         apply_reply_policy(config)
         config["platform_settings"]["segmented_reply"]["interval"] = "0,0"
@@ -61,8 +65,17 @@ class ReplyDeliveryTests(unittest.IsolatedAsyncioTestCase):
             event.get_result().chain.insert(0, Plain("我先翻翻记录。"))
             await adapter.on_format_reply(event)
         with patch("astrbot.core.platform.astr_message_event.Metric.upload", new_callable=AsyncMock):
-            async for _ in decorate.process(event):
-                pass
+            if proactive:
+                scopes = {key: {"segmented_reply_settings": {"enable": True, "words_count_threshold": 80,
+                          "split_mode": "regex", "regex": r".*?[。？！~…\n]+|.+$", "enable_content_cleanup": False}}
+                          for key in ("friend_settings", "group_settings")}
+                apply_proactive_reply_policy(scopes)
+                settings = scopes["group_settings" if group else "friend_settings"]["segmented_reply_settings"]
+                sender = SenderService(SimpleNamespace())
+                event.get_result().chain = sender.segment_decorated_chain(event.get_result().chain, settings)
+            else:
+                async for _ in decorate.process(event):
+                    pass
             await respond.process(event)
         target = bot.send_group_msg if group else bot.send_private_msg
         other = bot.send_private_msg if group else bot.send_group_msg
@@ -102,6 +115,23 @@ class ReplyDeliveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_final_answer_replacement_preserves_paragraph_delivery(self):
         paragraphs = ["找到了，是赵衡。", "后来你补充说，他已经把署名改回来了。", "这次记着呢。"]
         self.assertEqual(await self.deliver("\n\n".join(paragraphs), tool_preamble=True), paragraphs)
+
+    @unittest.skipUnless(HAS_PROACTIVE, "The pinned ProactiveChat plugin is not installed")
+    async def test_proactive_screenshot_has_no_blank_line_padding(self):
+        paragraphs = ["那担架还不是人抬的", "机器人体面", "人受罪"]
+        for group in (False, True):
+            with self.subTest(group=group):
+                self.assertEqual(await self.deliver("\n\n".join(paragraphs) + "\n\n", group=group, proactive=True), paragraphs)
+
+    @unittest.skipUnless(HAS_PROACTIVE, "The pinned ProactiveChat plugin is not installed")
+    async def test_proactive_preserves_single_newlines_and_punctuation_within_a_paragraph(self):
+        paragraphs = ["这是同一段。别按句号拆！\n这一行仍在同一段。", "这一段结束了？是的。"]
+        self.assertEqual(await self.deliver("\r\n \t\r\n".join(paragraphs) + "\r\n\t\r\n", proactive=True), paragraphs)
+
+    @unittest.skipUnless(HAS_PROACTIVE, "The pinned ProactiveChat plugin is not installed")
+    async def test_proactive_fenced_code_keeps_internal_blank_lines_and_indentation(self):
+        text = "代码如下：\n\n```python\ndef greet():\n    print('你好')\n\n    return 1\n```\n\n不用改里面的缩进。"
+        self.assertEqual(await self.deliver(text + "\n\n", proactive=True), [text])
 
 
 if __name__ == "__main__":
