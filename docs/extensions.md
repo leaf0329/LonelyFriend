@@ -90,7 +90,7 @@ sudo systemctl restart lonelyfriend
 
 表情生成使用 `meme_generator==0.2.3` 的完整图片与字体资源，放在 `data/plugin_data/astrbot_plugin_meme_generator/resources/`。离线安装的资源清单来自上游 `v0.2.3/resources/resources.json`，文件须通过作者 SHA-256 校验，清单附加 `version: "0.2.3"` 字段。补丁在已校验的资源齐全时跳过启动时的 CDN 下载扫描。资源约400 MB磁盘空间；不需要 GPU 或额外的生图 API。
 
-解析与表情制作各串行处理，解析音视频限制为15 MB、3分钟；这些限制可以在插件配置中调整。原图/GIF发送仍会消耗服务器流量。
+解析与表情制作各串行处理，解析音视频限制为200 MB、60分钟，下载请求超时为120秒；这些限制可以在插件配置中调整。原图/GIF发送仍会消耗服务器流量。
 
 停用扩展时先停聊天服务，移出新增插件，恢复对应配置并撤销 systemd 的附加依赖环境项，再启动服务。无需退出 QQ 登录，也不需要清空聊天数据库。
 

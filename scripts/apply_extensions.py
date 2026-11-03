@@ -47,8 +47,8 @@ def configure_addons(root: Path, policy: dict, access: dict):
         config = AstrBotConfig(config_path=str(root / f"data/config/{name}_config.json"),
                               schema=read(root / f"data/plugins/{name}/_conf_schema.json"))
         if name == "astrbot_plugin_parser":
-            config.update(whitelist=origins, source_max_size=15, source_max_minute=3,
-                          download_timeout=60, download_retry_times=0, debounce_interval=600,
+            config.update(whitelist=origins, source_max_size=200, source_max_minute=60,
+                          download_timeout=120, download_retry_times=0, debounce_interval=600,
                           single_heavy_render_card=True)
             # Use the upstream schema's defaults for each parser template.
             if not config.get("parsers_template"):
