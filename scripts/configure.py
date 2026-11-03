@@ -7,6 +7,7 @@ import os
 import secrets
 import shutil
 import subprocess
+from copy import deepcopy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,6 +144,24 @@ def apply_access(config: dict, access: dict) -> None:
     config["platform_settings"]["id_whitelist"] = origins or ["cuteq:unconfigured:deny"]
     config["admins_id"] = lists["admin_qq"]
     config["provider_ltm_settings"]["active_reply"]["whitelist"] = lists["group_qq"]
+    config["provider_ltm_settings"]["active_reply"]["enable"] = False
+
+
+async def disable_group_conversations(access: dict) -> None:
+    database = SQLiteDatabase(str(ROOT / "data/data_v4.db"))
+    try:
+        await database.initialize()
+        for group in access["group_qq"]:
+            origin = f"{QQ_PLATFORM_ID}:GroupMessage:{group}"
+            preference = await database.get_preference("umo", origin, "session_service_config")
+            settings = deepcopy(preference.value["val"]) if preference else {}
+            # Disable the native agent, keeping the session open for plugin commands.
+            settings["llm_enabled"] = False
+            await database.insert_preference_or_update(
+                "umo", origin, "session_service_config", {"val": settings},
+            )
+    finally:
+        await database.engine.dispose()
 
 
 async def set_persona(prompt: str, tools: list[str]) -> None:
@@ -195,7 +214,6 @@ def main() -> None:
     config["provider_settings"]["proactive_capability"]["add_cron_tools"] = False
     config["provider_settings"]["default_image_caption_provider_id"] = PROVIDER_ID
     config["provider_ltm_settings"].update(group_message_history_enable=True, group_message_history_max_cnt=150)
-    config["provider_ltm_settings"]["active_reply"].update(enable=True, possibility_reply=0.06)
     config["platform_settings"].update(
         enable_id_white_list=True, wl_ignore_admin_on_group=False,
         wl_ignore_admin_on_friend=False, reply_with_mention=False, reply_with_quote=False,
@@ -216,6 +234,7 @@ def main() -> None:
     if (ROOT / "data/stickers/catalog.json").is_file():
         tools.append("lonelyfriend_sticker")
     asyncio.run(set_persona(prompt, tools))
+    asyncio.run(disable_group_conversations(access))
 
     memory = plugin_config("astrbot_plugin_memory_companion")
     memory["memory_summary"]["provider_id"] = PROVIDER_ID
@@ -232,6 +251,7 @@ def main() -> None:
     proactive["notification_settings"]["enabled"] = False
     proactive["friend_settings"]["schedule_settings"].update(min_interval_minutes=120, max_interval_minutes=480, quiet_hours="23-8", max_unanswered_times=1)
     proactive["friend_settings"]["tts_settings"]["enable_tts"] = False
+    proactive["group_settings"]["enable"] = False
     for kind, access_key, event_type in (("friend_settings", "private_qq", "FriendMessage"), ("group_settings", "group_qq", "GroupMessage")):
         proactive[kind]["session_list"] = [f"{QQ_PLATFORM_ID}:{event_type}:{v}" for v in access[access_key]]
         proactive[kind]["proactive_prompt"] = prompt + "\n结合最近的话题与当前时间，自然地说一句有实际内容的话；没有值得说的内容时不要硬凑，不催促对方回复。"

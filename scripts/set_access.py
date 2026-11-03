@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 
-from configure import ROOT, apply_access, plugin_config, read_json, write_json
+from configure import ROOT, apply_access, disable_group_conversations, plugin_config, read_json, write_json
 
 
 def main() -> None:
@@ -18,7 +19,9 @@ def main() -> None:
         proactive = plugin_config("astrbot_plugin_proactive_chat")
         proactive["friend_settings"]["session_list"] = [f"cuteq_qq:FriendMessage:{value}" for value in access["private_qq"]]
         proactive["group_settings"]["session_list"] = [f"cuteq_qq:GroupMessage:{value}" for value in access["group_qq"]]
+        proactive["group_settings"]["enable"] = False
         proactive.save_config()
+        asyncio.run(disable_group_conversations(access))
         from apply_extensions import update_extension_access
         update_extension_access(ROOT, access)
     print(json.dumps({"valid": True, "applied": not args.check, "private_contacts": len(access["private_qq"]), "groups": len(access["group_qq"])}, ensure_ascii=False))

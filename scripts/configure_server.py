@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import json
 
-from configure import ROOT, apply_access, apply_proactive_reply_policy, apply_qzone_patch, apply_reply_policy, read_json, write_json
+from configure import ROOT, apply_access, apply_proactive_reply_policy, apply_qzone_patch, apply_reply_policy, disable_group_conversations, read_json, write_json
 from astrbot.core.db.sqlite import SQLiteDatabase
 
 
@@ -40,6 +40,7 @@ def main() -> None:
 
     proactive_path = ROOT / "data/config/astrbot_plugin_proactive_chat_config.json"
     proactive = read_json(proactive_path)
+    proactive["group_settings"]["enable"] = False
     apply_proactive_reply_policy(proactive)
     write_json(proactive_path, proactive)
 
@@ -76,6 +77,7 @@ def main() -> None:
     )
     write_json(napcat_path, napcat)
     asyncio.run(reset_legacy_platform_routes())
+    asyncio.run(disable_group_conversations(read_json(ROOT / "data/cuteq-access.json")))
     print(json.dumps({"qq_only": True, "qzone_autopublish": args.enable_qzone_publish,
                       "qzone_publish_cron": qzone["trigger"]["publish_cron"],
                       "qzone_publish_timezone": "Asia/Shanghai"}))
