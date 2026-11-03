@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "steam_id": "",
+  "group_id": "",
+  "platform_id": "cuteq_qq",
+  "poll_seconds": 60,
+  "proxy": "",
+  "node_binary": "runtime/node/bin/node"
+}

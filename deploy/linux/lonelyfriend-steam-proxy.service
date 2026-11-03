@@ -1,0 +1,21 @@
+[Unit]
+Description=Local outbound proxy for LonelyFriend Steam presence
+Wants=network-online.target
+After=network-online.target
+Before=lonelyfriend.service
+
+[Service]
+Type=simple
+User=lonelyfriend
+Group=lonelyfriend
+WorkingDirectory=/opt/lonelyfriend
+ExecStart=/opt/lonelyfriend/runtime/mihomo/mihomo -d /opt/lonelyfriend/data/steam-proxy -f /opt/lonelyfriend/data/steam-proxy/config.yaml
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+MemoryAccounting=true
+MemoryMax=192M
+
+[Install]
+WantedBy=multi-user.target

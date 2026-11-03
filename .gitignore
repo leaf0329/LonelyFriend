@@ -12,5 +12,6 @@ __pycache__/
 *.pem
 *.ppk
 *.key
+node_modules/
 *.lnk
 LonelyFriend 服务器登录信息.txt
