@@ -15,14 +15,6 @@
     "linux_qq_version": "3.2.34-53644",
     "linux_qq_source": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.36/beta/9ee04bef/linuxqq_3.2.34-53644_amd64.deb"
   },
-  "steam_presence": {
-    "node_version": "24.22.2",
-    "steam_user_version": "5.3.0",
-    "steam_session_version": "1.9.4",
-    "mihomo_version": "1.19.33",
-    "mihomo_asset": "mihomo-linux-amd64-compatible-v1.19.33.gz",
-    "mihomo_repository": "https://github.com/MetaCubeX/mihomo"
-  },
   "ffmpeg": {
     "version": "9.0.2",
     "distribution": "Gyan essentials build",
@@ -40,13 +32,6 @@
       "name": "astrbot_plugin_lonelyfriend_activities",
       "version": "0.2.1",
       "source": "plugins/astrbot_plugin_lonelyfriend_activities",
-      "astrbot_version": "4.29.1",
-      "optional": true
-    },
-    {
-      "name": "astrbot_plugin_lonelyfriend_steam",
-      "version": "0.1.0",
-      "source": "plugins/astrbot_plugin_lonelyfriend_steam",
       "astrbot_version": "4.29.1",
       "optional": true
     }

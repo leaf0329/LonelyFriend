@@ -68,6 +68,7 @@ def main() -> None:
 
     for name in ("config", "scripts", "plugins", "deploy", "tests"):
         include(ROOT / name)
+    include(ROOT / "extensions/javascript/napcat-highway-server.mjs")
     for name in (".astrbot", ".gitignore", ".gitattributes", "README.md", "requirements.txt", "requirements-linux.lock.txt", "sources.lock.json"):
         include(ROOT / name)
     for name in PRIVATE_FILES:

@@ -6,6 +6,7 @@ import json
 
 from configure import ROOT, apply_access, apply_proactive_reply_policy, apply_qzone_patch, apply_reply_policy, disable_group_conversations, read_json, write_json
 from astrbot.core.db.sqlite import SQLiteDatabase
+from apply_napcat_highway import apply as apply_highway_fix
 
 
 async def reset_legacy_platform_routes() -> None:
@@ -24,6 +25,7 @@ def main() -> None:
     parser.add_argument("--enable-qzone-publish", action="store_true",
                         help="Enable two daily autonomous QQ space posts.")
     args = parser.parse_args()
+    apply_highway_fix(ROOT)
     apply_qzone_patch()
     config_path = ROOT / "data/cmd_config.json"
     config = read_json(config_path)

@@ -1,6 +1,0 @@
-name: astrbot_plugin_lonelyfriend_steam
-display_name: Steam活动监测
-desc: Steam在线、游戏和Rich Presence详细活动变化的单条通知
-version: v0.1.0
-author: leaf0329
-astrbot_version: ">=4.29.1"
