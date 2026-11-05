@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import sys
 import tempfile
 import unittest
@@ -66,18 +65,14 @@ class MenuPermissionTests(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(directory.cleanup)
         self.plugin = activities.LonelyFriendActivities.__new__(activities.LonelyFriendActivities)
         self.plugin.data = Path(directory.name)
-        for name, value in {"news-review.json": {"reviewer_qq": "12345"},
-                            "cuteq-access.json": {"admin_qq": ["12345"], "private_qq": ["12345"]}}.items():
-            (self.plugin.data / name).write_text(json.dumps(value), encoding="utf-8")
         self.config = {"plugin_set": ["*"], "wake_prefix": ["/"], "provider_settings": {
             "web_search": True, "proactive_capability": {"add_cron_tools": True}}}
         self.plugin.context = SimpleNamespace(get_config=lambda **_: self.config)
         own = "astrbot_plugin_lonelyfriend_activities"
         self.items = [command("菜单", own, handler_name="command_menu"),
-                      command("热点记录", own, handler_name="review_records", permission="admin"),
                       command("admin_only", permission="admin"), command("new", permission="shared_group_admin"),
                       command("表情禁用", "astrbot_plugin_meme_generator", description="禁用（仅限Bot管理员）"),
-                      command("rsshelp", "astrbot_plugin_rsshub")]
+                      command("解析帮助", "astrbot_plugin_parser")]
 
     async def menu(self, *, admin=False, group="", isolated=False, query="", cron=False):
         origin = f"cuteq_qq:GroupMessage:{group}" if group else "cuteq_qq:FriendMessage:12345"
@@ -93,10 +88,10 @@ class MenuPermissionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_permissions_follow_current_sender_and_session(self):
         private = await self.menu(admin=True)
-        self.assertIn("热点审核", private)
+        self.assertIn("菜单导航", private)
+        self.assertNotIn("热点", private)
+        self.assertNotIn("RSS", private)
         self.assertIn("/admin_only", await self.menu(admin=True, query="admin_only"))
-        self.assertNotIn("热点审核", await self.menu(admin=True, group="54321"))
-        self.assertNotIn("热点审核", await self.menu(admin=True, cron=True))
         member = await self.menu(group="54321", query="全部")
         self.assertNotIn("admin_only", member)
         self.assertNotIn("表情禁用", member)
@@ -106,7 +101,7 @@ class MenuPermissionTests(unittest.IsolatedAsyncioTestCase):
     async def test_disabled_plugin_is_not_advertised(self):
         self.config["plugin_set"] = ["astrbot_plugin_lonelyfriend_activities"]
         output = await self.menu(admin=True, query="全部")
-        self.assertNotIn("/rsshelp", output)
+        self.assertNotIn("/解析帮助", output)
         self.assertNotIn("/表情禁用", output)
         self.assertIn("/admin_only", output)
 

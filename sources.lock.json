@@ -30,7 +30,7 @@
     },
     {
       "name": "astrbot_plugin_lonelyfriend_activities",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "source": "plugins/astrbot_plugin_lonelyfriend_activities",
       "astrbot_version": "4.29.1",
       "optional": true
@@ -55,14 +55,6 @@
       "version": "1.2.6",
       "repository": "https://github.com/Pancakes-Labs/astrbot_plugin_proactive_chat",
       "commit": "77a1d408ccd003a9d34ad4f51acfb8fc17bc35f5"
-    },
-    {
-      "name": "astrbot_plugin_rsshub",
-      "version": "2.1.4",
-      "repository": "https://github.com/AstrBot-Elementary-School/astrbot_plugin_rsshub",
-      "commit": "a047f46e47cb2a0f7a795f30b9f82ae027005846",
-      "patch": "deploy/patches/astrbot_plugin_rsshub-compatibility.patch",
-      "optional": true
     },
     {
       "name": "astrbot_plugin_parser",

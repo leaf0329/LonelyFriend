@@ -11,10 +11,11 @@ from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.db.sqlite import SQLiteDatabase
 
 ROOT = Path(__file__).resolve().parents[1]
-NEW_PLUGINS = ("astrbot_plugin_rsshub", "astrbot_plugin_parser", "astrbot_plugin_meme_generator", "astrbot_plugin_self_learning")
+NEW_PLUGINS = ("astrbot_plugin_parser", "astrbot_plugin_meme_generator", "astrbot_plugin_self_learning")
 ACTIVITY_PLUGIN = "astrbot_plugin_lonelyfriend_activities"
 EXTRA_TOOLS = {"web_search_deepseek", "deepseek_fetch_web_page", "future_task", "parse_media_url",
-               "lonelyfriend_read_feeds", "lonelyfriend_read_hot_topics", "lonelyfriend_make_meme", "lonelyfriend_share_news", "rss_list_subscriptions", "rss_list_push_history"}
+               "lonelyfriend_make_meme"}
+RETIRED_NEWS_TOOLS = {"lonelyfriend_read_feeds", "lonelyfriend_read_hot_topics", "lonelyfriend_share_news"}
 
 
 def apply_addon_patches(root: Path):
@@ -61,9 +62,6 @@ def configure_addons(root: Path, policy: dict, access: dict):
                 config["parsers_template"] = templates
         elif name == "astrbot_plugin_meme_generator":
             config.update(trigger_prefix="#", cooldown_seconds=15, generation_timeout=20)
-        elif name == "astrbot_plugin_rsshub":
-            config["basic_config"].update(minimal_interval=60, failed_queue_max_retries=1, history_entry_limit=0)
-            config["media"]["table_to_image"] = False
         else:
             config["Self_Learning_Basic"].update(enable_web_interface=False, enable_realtime_learning=False,
                 enable_message_capture=True, enable_auto_learning=True, enable_jargon_learning=True,
@@ -112,13 +110,14 @@ async def extend_persona_tools(root: Path, persona_id: str):
             raise RuntimeError(f"Active persona does not exist: {persona_id}")
         tools = persona.tools
         if tools is not None and "*" not in tools:
-            await database.update_persona(persona_id, tools=sorted(set(tools) | EXTRA_TOOLS))
+            retained = {tool for tool in tools if tool not in RETIRED_NEWS_TOOLS and not tool.startswith("rss_")}
+            await database.update_persona(persona_id, tools=sorted(retained | EXTRA_TOOLS))
     finally:
         await database.engine.dispose()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Apply the six approved QQ extensions without reinitializing chat or memory.")
+    parser = argparse.ArgumentParser(description="Apply the configured QQ extensions without reinitializing chat or memory.")
     parser.add_argument("--root", type=Path, default=ROOT)
     args = parser.parse_args()
     root = args.root.resolve()
@@ -139,7 +138,6 @@ def main():
     persona_id = config["agent_runner"]["config"]["persona"]["persona_id"]
     asyncio.run(extend_persona_tools(root, persona_id))
     print(json.dumps({"web_search": "deepseek", "native_proactive": True, "addons": NEW_PLUGINS,
-                      "daily_reading_targets": len(access["private_qq"]) + len(access["group_qq"]),
                       "learning_scope": "allowlisted_groups_only", "automatic_persona_updates": True}))
 
 

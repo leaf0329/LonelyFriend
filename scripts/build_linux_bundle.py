@@ -19,7 +19,6 @@ PLUGINS = (
 PRIVATE_FILES = (
     "cmd_config.json", "cuteq-private.json", "cuteq-access.json",
     "persona.md", "persona-source.json", "persona-binding.json", "mcp_server.json",
-    "news-review.json",
 )
 
 
@@ -74,7 +73,6 @@ def main() -> None:
     for name in PRIVATE_FILES:
         include(ROOT / "data" / name)
     include(ROOT / "data/data_v4.db")
-    include(ROOT / "data/plugin_data/astrbot_plugin_lonelyfriend_activities/news-review.db")
     for name in PLUGINS:
         plugin_source = ROOT / ("plugins" if name == "astrbot_plugin_lonelyfriend_memory" else "data/plugins") / name
         include(plugin_source, Path("data/plugins") / name)

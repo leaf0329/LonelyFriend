@@ -4,15 +4,13 @@ from collections import Counter
 
 PLUGIN_CATEGORIES = {
     "builtin_commands": "会话管理",
-    "astrbot_plugin_lonelyfriend_activities": "热点审核",
+    "astrbot_plugin_lonelyfriend_activities": "菜单导航",
     "astrbot_plugin_memory_companion": "记忆管理",
-    "astrbot_plugin_rsshub": "RSS订阅",
     "astrbot_plugin_qzone": "QQ空间",
     "astrbot_plugin_meme_generator": "表情包",
     "astrbot_plugin_parser": "链接解析",
     "astrbot_plugin_self_learning": "自主学习",
 }
-REVIEW_HANDLERS = {"approve_review", "reject_review", "pending_reviews", "view_review", "review_records", "review_statistics"}
 
 
 def visible_commands(items, permitted):
@@ -34,7 +32,7 @@ def render_menu(entries, query: str, *, prefix: str, entry_command: str, capabil
     if not query:
         lines = [f"命令菜单：当前可见 {len(entries)} 个命令及子命令。"]
         lines.extend(f"{category}（{count}个）：{entry} {category}" for category, count in categories)
-        lines.extend([f"\n完整列表：{entry} 全部", f"关键词查询：{entry} 热点、{entry} 表情"])
+        lines.extend([f"\n完整列表：{entry} 全部", f"关键词查询：{entry} 记忆、{entry} 表情"])
         if capability_hints:
             lines.append("\n也可直接用自然语言：\n" + "\n".join(capability_hints))
         lines.append("\n按当前启用状态与权限列出；部分命令还受插件内部开关限制。")
@@ -69,7 +67,7 @@ def render_menu(entries, query: str, *, prefix: str, entry_command: str, capabil
     for item in matches[(page - 1) * 10:page * 10]:
         description = " ".join(item["description"].split())[:48]
         lines.append(f"{prefix}{item['effective_command']}" + (f" — {description}" if description else ""))
-    help_entries = [item for item in entries if item["original_command"] in {"mcomp help", "表情帮助", "rsshelp"}
+    help_entries = [item for item in entries if item["original_command"] in {"mcomp help", "表情帮助"}
                     and any(match["plugin"] == item["plugin"] for match in matches)]
     if help_entries:
         lines.append("\n模块详细帮助：" + "、".join(prefix + item["effective_command"] for item in help_entries))

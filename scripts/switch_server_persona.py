@@ -20,7 +20,7 @@ CONFIG_FILES = (
     "data/cmd_config.json", "data/data_v4.db", "data/persona.md", "data/persona-source.json",
     "data/persona-reset.json", "data/persona-deployment.json",
     "data/config/astrbot_plugin_proactive_chat_config.json", "data/config/astrbot_plugin_qzone_config.json",
-    "data/config/astrbot_plugin_self_learning_config.json", "data/plugin_data/astrbot_plugin_rsshub/rsshub.db",
+    "data/config/astrbot_plugin_self_learning_config.json",
 )
 
 

@@ -34,7 +34,7 @@ class PersonaSwitchTests(unittest.TestCase):
         })
         self.write("data/config/astrbot_plugin_qzone_config.json", {"llm": {"post_prompt": "old", "comment_prompt": "old-shi", "reply_prompt": "old-shi"}, "trigger": {"publish_cron": "0 12,21 * * *"}})
         self.write("data/config/astrbot_plugin_self_learning_config.json", {"Target_Settings": {"current_persona_name": "previous", "target_qq_list": ["group_test"]}})
-        self.write("data/plugin_data/astrbot_plugin_lonelyfriend_activities/delivery.json", {"friend": {"date": "2026-10-30", "status": "sent"}})
+        self.write("data/retired/rss-news/delivery.json", {"friend": {"date": "2026-10-30", "status": "sent"}})
         for relative in ["data/cuteq-private.json", "data/cuteq-access.json", "data/napcat/config/webui.json", "data/stickers/catalog.json", "data/plugin_data/astrbot_plugin_meme_generator/resources/image.png", "data/plugin_data/astrbot_plugin_parser/cookies/login.json"]:
             self.write(relative, {"preserve": relative})
         for relative in switch_persona.RESET_DIRECTORIES:
@@ -62,11 +62,11 @@ class PersonaSwitchTests(unittest.TestCase):
         finally:
             await database.engine.dispose()
 
-    def test_switch_resets_content_but_preserves_accounts_permissions_assets_and_limits(self):
+    def test_switch_resets_content_but_preserves_accounts_permissions_assets_and_archives(self):
         keep = [self.data / "cuteq-private.json", self.data / "cuteq-access.json", self.data / "napcat/config/webui.json",
                 self.data / "stickers/catalog.json", self.data / "plugin_data/astrbot_plugin_meme_generator/resources/image.png",
                 self.data / "plugin_data/astrbot_plugin_parser/cookies/login.json",
-                self.data / "plugin_data/astrbot_plugin_lonelyfriend_activities/delivery.json"]
+                self.data / "retired/rss-news/delivery.json"]
         before = {path: path.read_bytes() for path in keep}
         result = switch_persona.switch_and_reset(self.root, "replacement")
         self.assertEqual(result["persona_id"], "replacement")

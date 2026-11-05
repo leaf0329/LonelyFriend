@@ -19,7 +19,7 @@ def main() -> None:
     expected = {"astrbot_plugin_qzone", "astrbot_plugin_memory_companion",
                 "astrbot_plugin_proactive_chat", "astrbot_plugin_lonelyfriend_memory"}
     if (ROOT / "data/extensions.json").is_file():
-        expected.update({"astrbot_plugin_rsshub", "astrbot_plugin_parser", "astrbot_plugin_meme_generator",
+        expected.update({"astrbot_plugin_parser", "astrbot_plugin_meme_generator",
                          "astrbot_plugin_self_learning", "astrbot_plugin_lonelyfriend_activities"})
     assert {p.name for p in (ROOT / "data/plugins").iterdir() if p.is_dir() and not p.name.startswith("_")} == expected
     assert [p["id"] for p in config["platform"]] == ["cuteq_qq"]
@@ -38,6 +38,13 @@ def main() -> None:
         assert {p["name"] for p in loaded if not p["reserved"] and p["activated"]} == expected
         assert not client.get("/api/v1/plugins/failed").json()["data"]
         commands = client.get("/api/v1/commands").json()["data"]["items"]
+        assert not any(item["plugin"] == "astrbot_plugin_lonelyfriend_activities" and item["handler_name"] != "command_menu" for item in commands)
+        jobs = client.get("/api/v1/cron/jobs").json()["data"]
+        assert not any((job.get("payload") or {}).get("lonelyfriend_activity") == "lonelyfriend_public_reading_v1" for job in jobs)
+        tools = client.get("/api/v1/tools").json()["data"]
+        retired = {"lonelyfriend_read_feeds", "lonelyfriend_read_hot_topics", "lonelyfriend_share_news"}
+        assert not any(tool["name"].startswith("rss_") or tool["name"] in retired for tool in tools)
+        report.update(news_push_removed=True, news_tools_removed=True)
         qzone_commands = [item for item in commands if item["plugin"] == "astrbot_plugin_qzone"]
         assert qzone_commands and all(item["permission"] == "admin" for item in qzone_commands)
         report.update(plugins_loaded=sorted(expected), failed_plugins=[],
