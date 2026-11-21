@@ -1,4 +1,4 @@
-"""Render short local cover samples without changing the running QQ services."""
+"""Render local singing covers without sending QQ messages."""
 
 from __future__ import annotations
 
@@ -99,11 +99,11 @@ def transpose_accompaniment(ffmpeg: Path, source: Path, output: Path, pitch: int
 
 
 def main():
-    parser = argparse.ArgumentParser(description="本地短片段翻唱试听，不发送QQ消息")
+    parser = argparse.ArgumentParser(description="本地整首或指定片段翻唱，不发送QQ消息")
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--reference", type=Path, required=True)
-    parser.add_argument("--start", type=float, required=True, help="原曲起点，秒")
-    parser.add_argument("--duration", type=float, default=24, help="最多30秒")
+    parser.add_argument("--start", type=float, default=0, help="原曲起点，秒")
+    parser.add_argument("--duration", type=float, help="不填时转换到音源末尾，音源最长60分钟")
     parser.add_argument("--pitch-shift", type=int, nargs="+", default=[0, 12])
     parser.add_argument("--steps", type=int, default=40)
     parser.add_argument("--output", type=Path, required=True)
@@ -114,8 +114,8 @@ def main():
         raise RuntimeError("翻唱工作进程未确认启动。")
     if not math.isfinite(args.start) or args.start < 0:
         parser.error("起点必须是非负秒数。")
-    if not math.isfinite(args.duration) or not 1 <= args.duration <= 30:
-        parser.error("试听长度必须在1到30秒之间。")
+    if args.duration is not None and (not math.isfinite(args.duration) or not 1 <= args.duration <= 3600):
+        parser.error("转换长度必须在1秒到60分钟之间。")
     if not 1 <= args.steps <= 100 or any(abs(x) > 12 for x in args.pitch_shift):
         parser.error("扩散步数须为1到100，升降调须在正负12半音内。")
     source, reference = args.source.resolve(), args.reference.resolve()
@@ -124,6 +124,16 @@ def main():
     ffmpegs = sorted((ROOT / "runtime/ffmpeg").glob("*/bin/ffmpeg.exe"))
     if not ffmpegs or not (BACKEND / "inference.py").is_file():
         parser.error("请先安装项目FFmpeg和独立Seed-VC环境。")
+    duration_info = subprocess.run([str(ffmpegs[0].with_name("ffprobe.exe")), "-v", "error",
+        "-show_entries", "format=duration", "-of", "json", str(source)],
+        capture_output=True, check=True, timeout=10, creationflags=CREATE_NO_WINDOW)
+    source_duration = float(json.loads(duration_info.stdout)["format"]["duration"])
+    if not 1 <= source_duration <= 3600:
+        parser.error("音源长度必须在1秒到60分钟之间。")
+    if args.duration is None:
+        args.duration = source_duration - args.start
+    if args.duration < 1 or args.start + args.duration > source_duration + 0.1:
+        parser.error("所选时间段超出音源长度。")
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     environment = os.environ.copy()
@@ -138,7 +148,9 @@ def main():
               "steps": args.steps, "variants": []}
     log_path = args.log_file.resolve() if args.log_file is not None else output / "inference.log"
 
-    def run(command, cwd=ROOT, timeout=600):
+    def run(command, cwd=ROOT, timeout=None):
+        if timeout is None:
+            timeout = max(600, math.ceil(args.duration * 4 + 180))
         with log_path.open("ab") as log:
             subprocess.run([str(x) for x in command], cwd=cwd, env=environment,
                            stdout=log, stderr=log, check=True, timeout=timeout,

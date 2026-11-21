@@ -36,6 +36,16 @@ class SingingPluginTests(unittest.IsolatedAsyncioTestCase):
         plugin.singing.start.assert_awaited_once_with(event, "1", 233, 255.5, -12, "file")
         self.assertIn("已接下翻唱任务", results[0].chain[0].text)
 
+    async def test_command_and_natural_request_default_to_full_song_without_times(self):
+        plugin, event = self.plugin(), self.event()
+        results = [r async for r in plugin.singing_cover(event, "1")]
+        plugin.singing.start.assert_awaited_once_with(event, "1", None, None, 0, "auto")
+        self.assertIn("整首", results[0].chain[0].text)
+        plugin.singing.start.reset_mock()
+        result = await plugin.cover_music(event, "1")
+        plugin.singing.start.assert_awaited_once_with(event, "1", None, None, 0, "auto")
+        self.assertIn("已提交", result)
+
     async def test_unapproved_context_and_cron_do_not_start_singing(self):
         for event in (self.event(origin="cuteq_qq:GroupMessage:99999"), self.event(cron=True)):
             plugin = self.plugin()

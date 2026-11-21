@@ -22,7 +22,7 @@ from .singing import load_singing, SingingError
 from .singing_protocol import interval, seconds
 
 
-@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、点名群聊、本地语音与翻唱", "0.5.0")
+@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、点名群聊、本地语音与翻唱", "0.6.0")
 class LonelyFriendActivities(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -85,29 +85,34 @@ class LonelyFriendActivities(Star):
                 text = "\n".join(f"{i}. {s['title']} · {s['artist']} · {int(s['duration'])//60}:{int(s['duration'])%60:02d} · {s['album']}"
                                  + ("〔可能需要平台播放权限〕" if s.get("restricted") else "")
                                  for i, s in enumerate(songs, 1))
-                text += "\n\n选定版本后发送：/翻唱 1 0:30-0:50\n单次1—30秒；列表仅本人在当前会话10分钟内可用。"
+                text += "\n\n选定版本后发送：/翻唱 1（默认整首）\n指定片段：/翻唱 1 0:30-0:50\n列表仅本人在当前会话10分钟内可用。"
             yield event.plain_result(text).use_t2i(False)
         except (SingingError, ValueError) as error:
             yield event.plain_result(str(error)).use_t2i(False)
 
     @filter.command("翻唱", priority=100)
     async def singing_cover(self, event: AstrMessageEvent, query: GreedyStr):
-        """翻唱 序号/BV号/歌曲链接/文件/本地:编号 起点-终点 [升降半音] [文件]。"""
+        """翻唱 序号/BV号/歌曲链接/文件/本地:编号 [起点-终点] [升降半音] [文件]；默认整首。"""
         event.stop_event()
         try:
             client = self.singing_for(event)
             args = shlex.split(query)
-            if not 2 <= len(args) <= 4:
-                yield event.plain_result("先 /翻唱搜歌 歌名，再 /翻唱 1 0:30-0:50\n也可用BV号、完整歌曲链接或“文件”；先发音频文件，再 /翻唱 文件 0:30-0:50\n可附加升降半音（-12至12），末尾加“文件”发送立体声MP3；单次最多30秒。\n/翻唱状态、/取消翻唱、/取回翻唱 可管理自己的任务。").use_t2i(False)
+            if not 1 <= len(args) <= 4:
+                yield event.plain_result("先 /翻唱搜歌 歌名，再 /翻唱 1，默认整首MP3。\n可用BV号、完整歌曲链接或“文件”；先发音频，再 /翻唱 文件。\n指定片段：/翻唱 1 0:30-0:50；30秒内默认语音，更长时发MP3。\n可附加升降半音（-12至12），末尾加“文件”强制MP3；音源最长60分钟。\n/翻唱状态、/取消翻唱、/取回翻唱 可管理自己的任务。").use_t2i(False)
                 return
-            start, end = interval(args[1])
-            mode = "file" if args[-1] == "文件" else "voice"
-            options = args[2:-1] if mode == "file" else args[2:]
+            options = args[1:]
+            mode = "file" if options and options[-1] == "文件" else "auto"
+            if mode == "file":
+                options.pop()
+            start = end = None
+            if options and any(mark in options[0][1:] for mark in ("-", "~", "～", "—", "至", "到")):
+                start, end = interval(options.pop(0))
             if len(options) > 1:
                 raise ValueError("升降调只填写一个整数半音。")
             pitch = int(options[0]) if options else 0
             job_id = await client.start(event, args[0], start, end, pitch, mode)
-            yield event.plain_result(f"已接下翻唱任务 {job_id[:8]}，{start:g}—{end:g}秒，完成后发到这里。\n可用 /翻唱状态 查看进度；本机离线或忙碌时不会自动重试。").use_t2i(False)
+            selected = "整首，完成后以MP3发到这里" if start is None else f"{start:g}—{end:g}秒，完成后发到这里"
+            yield event.plain_result(f"已接下翻唱任务 {job_id[:8]}，{selected}。\n可用 /翻唱状态 查看进度；本机离线或忙碌时不会自动重试。").use_t2i(False)
         except (SingingError, ValueError) as error:
             yield event.plain_result(str(error)).use_t2i(False)
 
@@ -150,36 +155,46 @@ class LonelyFriendActivities(Star):
 
     @filter.llm_tool(name="lonelyfriend_search_music")
     async def search_music(self, event: AstrMessageEvent, keyword: str, source: str = "netease") -> str:
-        """用户请求点歌翻唱时搜索歌曲版本，不主动点歌。选定版本后再调用翻唱工具。
+        """用户点歌翻唱时搜歌，只有歌名也可搜索。优先准确匹配歌名的原唱版本，未要求时不选伴奏、翻唱或改编。
+        用户没指定歌手不必例行追问，仅同名歌曲确实无法区分时确认。选定版本后调用翻唱工具，未指定时间默认整首。
+        不要仅因为原唱需要播放权限而选其他歌手或混音版；权限不足应说明并请用户提供音源。
+        搜索不检查播放权限，不要提前断言无法下载；明确要求唱歌时继续提交，实际取源失败后再说明。
 
         Args:
-            keyword(string): 歌名与歌手关键词。
+            keyword(string): 歌名，可选歌手；5:20am之类的名称属于歌名，不是片段时间。
             source(string): netease、tencent或local；local可查用户已提供的本地音源。
         """
         try:
             songs = await self.singing_for(event).search(event, keyword, source)
-            return json.dumps([{"index": i, **song} for i, song in enumerate(songs, 1)], ensure_ascii=False)
+            # Platform fee metadata does not prove the playback URL is inaccessible.
+            results = [{"index": i, **{key: value for key, value in song.items() if key != "restricted"}}
+                       for i, song in enumerate(songs, 1)]
+            return json.dumps({"songs": results, "playback_access": "not_checked",
+                "note": "仅查询到歌曲元数据，尚未尝试获取音源，不能据此声称受限。用户要求唱歌时可继续提交翻唱；未指定时间默认整首。"}, ensure_ascii=False)
         except (SingingError, ValueError) as error:
             return str(error)
 
     @filter.llm_tool(name="lonelyfriend_cover_music")
-    async def cover_music(self, event: AstrMessageEvent, choice: str, start_time: str, end_time: str,
-                          pitch: int = 0, delivery: str = "voice") -> str:
-        """仅在用户明确要求翻唱并指定时间段时提交本地任务。单次1—30秒，不用于普通语音回复或主动任务。
+    async def cover_music(self, event: AstrMessageEvent, choice: str, start_time: str = "", end_time: str = "",
+                          pitch: int = 0, delivery: str = "auto") -> str:
+        """用户明确点歌后提交翻唱。默认整首，只有用户特别指定时间段时才截取，不例行追问时间。
+        未指定歌手时可先搜歌选择匹配的原唱，无法区分同名歌曲时再确认。音源最长60分钟，不用于普通语音或主动任务。
 
         Args:
             choice(string): 当前搜歌结果序号，或BV号、完整网易云/QQ歌曲链接、“文件”、本地:编号；不接受本地文件路径。
-            start_time(string): 用户指定的片段起点，例如3:53；没指定时先询问，不猜副歌位置。
-            end_time(string): 用户指定的终点，例如4:15。
+            start_time(string): 可选起点，例如3:53。用户没指定时间时留空，默认整首；不自行编造时间。
+            end_time(string): 可选终点，例如4:15。与起点同时填写或同时留空；用户只说唱一段而无时间时再询问。
             pitch(number): 升降整数半音，-12至12，默认0。
-            delivery(string): voice发送语音，file发送立体声MP3。
+            delivery(string): 默认auto：整首或超过30秒发立体声MP3，指定的30秒内片段发语音；file强制MP3，voice仅支持明确指定的30秒内片段。
         """
         try:
             # AstrBot 4.29 exposes int tool parameters as JSON numbers.
             if type(pitch) not in (int, float) or not -12 <= pitch <= 12 or int(pitch) != pitch:
                 raise ValueError("升降调须为-12至12的整数半音。")
             pitch = int(pitch)
-            job_id = await self.singing_for(event).start(event, choice, seconds(start_time), seconds(end_time), pitch, delivery)
+            start = seconds(start_time) if start_time else None
+            end = seconds(end_time) if end_time else None
+            job_id = await self.singing_for(event).start(event, choice, start, end, pitch, delivery)
             return f"已提交翻唱任务{job_id[:8]}，音频完成后会单独发送到当前会话。请简短自然接话，不重复提交，不宣称已唱完。"
         except (SingingError, ValueError) as error:
             return str(error)

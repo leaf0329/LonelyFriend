@@ -29,7 +29,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from plugins.astrbot_plugin_lonelyfriend_activities.music_sources import MusicSources
 from plugins.astrbot_plugin_lonelyfriend_activities.singing_protocol import (
-    AUDIO_SUFFIXES, MAX_SOURCE_BYTES, validate_clip, validate_source,
+    AUDIO_SUFFIXES, MAX_AUDIO_SECONDS, MAX_SOURCE_BYTES, MAX_VOICE_SECONDS,
+    processing_timeout, validate_clip, validate_source,
 )
 
 LOG = logging.getLogger("singing-service")
@@ -124,7 +125,7 @@ class SingingWorker:
             report.unlink()
             report.with_suffix(".log").unlink(missing_ok=True)
 
-    async def run_process(self, args: list, log: Path, *, inference=False):
+    async def run_process(self, args: list, log: Path, *, inference=False, timeout=30):
         with log.open("ab") as output:
             process = await asyncio.create_subprocess_exec(
                 *map(str, args), cwd=self.root, stdin=asyncio.subprocess.PIPE,
@@ -137,7 +138,7 @@ class SingingWorker:
                     process.stdin.write(b"start\n")
                     await process.stdin.drain()
                 process.stdin.close()
-                code = await asyncio.wait_for(process.wait(), timeout=600 if inference else 30)
+                code = await asyncio.wait_for(process.wait(), timeout=timeout)
                 if code:
                     raise ValueError("本地音频处理失败，详情已保存在翻唱任务日志。")
             finally:
@@ -162,14 +163,14 @@ class SingingWorker:
         if process.returncode:
             raise ValueError("文件不是可解码的音频。")
         duration = float(json.loads(output)["format"]["duration"])
-        if not 0 < duration <= 3600:
+        if not 1 <= duration <= MAX_AUDIO_SECONDS:
             raise ValueError("音源须为60分钟以内的音频。")
         return duration
 
     def cache_key(self, params: dict, identity: str) -> str:
         source = params["source"]
         fingerprint = {"source": {"source": "upload"} if source["source"] == "upload" else source,
-            "identity": identity, "start": float(params["start"]), "end": float(params["end"]), "pitch": params["pitch"],
+            "identity": identity, "start": params["start"], "end": params["end"], "pitch": params["pitch"],
             "reference": hashlib.sha256(self.reference.read_bytes()).hexdigest(),
             "pipeline": (self.root / "scripts/sing_cover.py").stat().st_mtime_ns,
             "models": (self.root / "data/singing/model-manifest.json").read_text(encoding="utf-8")}
@@ -205,40 +206,46 @@ class SingingWorker:
                 cached = (cache_dir / "ready.json").is_file()
                 if cached:
                     info = json.loads((cache_dir / "ready.json").read_text(encoding="utf-8"))
+                    target_duration = info["duration"]
                 else:
                     if source["source"] not in {"upload", "local"}:
                         info, url, headers = await self.sources.resolve(source)
-                        if params["end"] > info["duration"] + 0.05:
+                        if params["end"] is not None and params["end"] > info["duration"] + 0.05:
                             raise ValueError(f"所选时间超出音源时长（{info['duration']:.1f}秒）。")
                         original = work / "original.audio"
                         await self.sources.download(url, source["source"], original, headers)
                     duration = await self.probe(original)
                     if abs(duration - info["duration"]) > 3:
                         raise ValueError("音频长度与完整歌曲不符，可能只有试听，停止翻唱。")
-                    if params["end"] > duration + 0.05:
+                    if params["end"] is not None and params["end"] > duration + 0.05:
                         raise ValueError(f"所选时间超出音源时长（{duration:.1f}秒）。")
-                    job["stage"] = "分离与翻唱"
+                    start = params["start"] if params["start"] is not None else 0
+                    target_duration = params["end"] - start if params["end"] is not None else duration
+                    job.update(stage="分离与翻唱", duration=target_duration)
                     self.save(job)
                     await self.run_process([self.engine_python, self.root / "scripts/sing_cover.py",
                         "--wait-for-parent", "--source", original, "--reference", self.reference,
                         "--log-file", log,
-                        "--start", params["start"], "--duration", params["end"] - params["start"],
-                        "--pitch-shift", params["pitch"], "--steps", 40, "--output", work / "cover"], log, inference=True)
+                        "--start", start, "--duration", target_duration,
+                        "--pitch-shift", params["pitch"], "--steps", 40, "--output", work / "cover"],
+                        log, inference=True, timeout=processing_timeout(target_duration))
                     result = work / "cover" / f"si-cover-{params['pitch']:+}.wav"
                     cache_dir.mkdir(exist_ok=True)
                     job["stage"] = "整理音频"
                     self.save(job)
+                    if target_duration <= MAX_VOICE_SECONDS:
+                        await self.run_process([self.ffmpeg, "-v", "error", "-y", "-i", result,
+                            "-ac", 1, "-ar", 24000, cache_dir / "voice.wav"], log)
                     await self.run_process([self.ffmpeg, "-v", "error", "-y", "-i", result,
-                        "-ac", 1, "-ar", 24000, cache_dir / "voice.wav"], log)
-                    await self.run_process([self.ffmpeg, "-v", "error", "-y", "-i", result,
-                        "-codec:a", "libmp3lame", "-b:a", "192k", cache_dir / "cover.mp3"], log)
-                if abs(await self.probe(cache_dir / "voice.wav") - (params["end"] - params["start"])) > 0.1:
-                    raise ValueError("成品音频长度校验失败。")
-                if abs(await self.probe(cache_dir / "cover.mp3") - (params["end"] - params["start"])) > 0.2:
+                        "-codec:a", "libmp3lame", "-b:a", "192k", cache_dir / "cover.mp3"], log, timeout=120)
+                if target_duration <= MAX_VOICE_SECONDS:
+                    if abs(await self.probe(cache_dir / "voice.wav") - target_duration) > 0.1:
+                        raise ValueError("成品音频长度校验失败。")
+                if abs(await self.probe(cache_dir / "cover.mp3") - target_duration) > 0.2:
                     raise ValueError("成品MP3长度校验失败。")
-                (cache_dir / "ready.json").write_text(json.dumps({"duration": params["end"] - params["start"], "title": info["title"]}), encoding="utf-8")
+                (cache_dir / "ready.json").write_text(json.dumps({"duration": target_duration, "title": info["title"]}), encoding="utf-8")
                 job.update(status="done", stage="完成", title=info["title"], cache_key=key, cache_hit=cached,
-                           duration=params["end"] - params["start"])
+                           duration=target_duration)
         except asyncio.CancelledError:
             job.update(status="cancelled", stage="已取消")
             raise
@@ -293,7 +300,7 @@ def make_app(worker: SingingWorker) -> web.Application:
     @routes.get("/v1/health")
     async def health(request):
         return web.json_response({"ok": True, "service": "lonelyfriend-singing", "pid": os.getpid(),
-            "busy": worker.active is not None, "max_clip_seconds": 30})
+            "busy": worker.active is not None, "max_audio_seconds": MAX_AUDIO_SECONDS, "default_full_song": True})
 
     @routes.post("/v1/search")
     async def search(request):
@@ -335,7 +342,8 @@ def make_app(worker: SingingWorker) -> web.Application:
             raise ValueError("任务编号不正确。")
         source = validate_source(data.get("source", {}))
         validate_clip(data.get("start"), data.get("end"), data.get("pitch", 0))
-        params = {"source": source, "start": float(data["start"]), "end": float(data["end"]), "pitch": data.get("pitch", 0)}
+        params = {"source": source, "start": float(data["start"]) if data.get("start") is not None else None,
+            "end": float(data["end"]) if data.get("end") is not None else None, "pitch": data.get("pitch", 0)}
         try:
             existing = worker.load(job_id)
         except web.HTTPNotFound:
@@ -369,7 +377,12 @@ def make_app(worker: SingingWorker) -> web.Application:
         job = worker.load(request.match_info["job_id"])
         if job["status"] != "done":
             return web.json_response({"error": "任务尚未完成。"}, status=409)
-        filename = "cover.mp3" if request.query.get("format") == "file" else "voice.wav"
+        mode = request.query.get("format", "file")
+        if mode not in {"voice", "file"}:
+            raise ValueError("发送方式可选voice或file。")
+        if mode == "voice" and job["duration"] > MAX_VOICE_SECONDS:
+            raise ValueError("超过30秒的翻唱请取回MP3文件。")
+        filename = "cover.mp3" if mode == "file" else "voice.wav"
         path = worker.cache / job["cache_key"] / filename
         if not path.is_file():
             return web.json_response({"error": "音频缓存已过期，请重新提交。"}, status=410)

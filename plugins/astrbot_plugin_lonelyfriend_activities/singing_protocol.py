@@ -4,7 +4,9 @@ import math
 import re
 from urllib.parse import parse_qs, urlsplit
 
-MAX_CLIP_SECONDS = 30
+MAX_AUDIO_SECONDS = 3600
+MAX_VOICE_SECONDS = 30
+MAX_RESULT_BYTES = 90 * 1024 * 1024
 MAX_SOURCE_BYTES = 200 * 1024 * 1024
 SOURCES = {"netease", "tencent", "bilibili", "local", "upload"}
 AUDIO_SUFFIXES = {".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".opus"}
@@ -25,19 +27,24 @@ def seconds(value: str) -> float:
 def interval(value: str) -> tuple[float, float]:
     parts = re.split(r"[-~～—至到]", value.replace("：", ":"))
     if len(parts) != 2:
-        raise ValueError("请指定时间段，例如3:53-4:15；单次最多30秒。")
+        raise ValueError("时间段请写成3:53-4:15；不填时间段时默认整首。")
     start, end = map(seconds, parts)
     validate_clip(start, end, 0)
     return start, end
 
 
-def validate_clip(start: float, end: float, pitch: int):
-    if (type(start) not in (int, float) or type(end) not in (int, float)
-            or not math.isfinite(start) or not math.isfinite(end)
-            or start < 0 or not 1 <= end - start <= MAX_CLIP_SECONDS):
-        raise ValueError("时间段须为1至30秒，起点不能为负数。")
+def validate_clip(start: float | None, end: float | None, pitch: int):
+    if start is not None or end is not None:
+        if (type(start) not in (int, float) or type(end) not in (int, float)
+                or not math.isfinite(start) or not math.isfinite(end)
+                or start < 0 or end > MAX_AUDIO_SECONDS or end - start < 1):
+            raise ValueError("起止时间须同时指定，片段至少1秒且须位于音源前60分钟内；不填时默认整首。")
     if type(pitch) is not int or not -12 <= pitch <= 12:
         raise ValueError("升降调须为-12至12的整数半音。")
+
+
+def processing_timeout(duration: float) -> int:
+    return max(600, math.ceil(duration * 4 + 180))
 
 
 def validate_source(source: dict) -> dict:

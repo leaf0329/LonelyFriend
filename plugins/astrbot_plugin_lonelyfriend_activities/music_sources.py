@@ -11,6 +11,14 @@ import httpx
 from .singing_protocol import MAX_SOURCE_BYTES, validate_source
 
 
+def preferred_titles(songs: list[dict], keyword: str) -> list[dict]:
+    def title(value):
+        return "".join(value.casefold().split()).strip("《》")
+
+    exact = [song for song in songs if title(song["title"]) == title(keyword)]
+    return exact or songs
+
+
 class MusicSources:
     def __init__(self, library: dict):
         self.library = library
@@ -31,25 +39,27 @@ class MusicSources:
                            for word in keyword.lower().split())][:5]
         if source == "netease":
             response = await self.http.post("https://music.163.com/api/search/get/web",
-                data={"s": keyword, "limit": 5, "type": 1, "offset": 0})
+                data={"s": keyword, "limit": 10, "type": 1, "offset": 0})
             response.raise_for_status()
             data = response.json()
             if data.get("code") != 200:
                 raise ValueError("网易云搜索暂不可用。")
-            return [{"source": source, "id": str(song["id"]), "title": song["name"],
+            songs = [{"source": source, "id": str(song["id"]), "title": song["name"],
                      "artist": "、".join(a["name"] for a in song["artists"]),
                      "album": song["album"]["name"], "duration": song["duration"] / 1000,
                      "restricted": bool(song.get("fee"))}
-                    for song in data.get("result", {}).get("songs", [])[:5]]
+                    for song in data.get("result", {}).get("songs", [])[:10]]
+            return preferred_titles(songs, keyword)
         if source == "tencent":
             from qqmusic_api import Client
             from qqmusic_api.modules.search import SearchType
             async with asyncio.timeout(25), Client() as client:
-                result = await client.search.search_by_type(keyword, search_type=SearchType.SONG, num=5)
-                return [{"source": source, "id": song.mid, "title": song.name,
+                result = await client.search.search_by_type(keyword, search_type=SearchType.SONG, num=10)
+                songs = [{"source": source, "id": song.mid, "title": song.name,
                          "artist": "、".join(a.name for a in song.singer),
                          "album": song.album.name, "duration": song.interval,
-                         "restricted": bool(song.pay.pay_play)} for song in result.song[:5]]
+                         "restricted": bool(song.pay.pay_play)} for song in result.song[:10]]
+                return preferred_titles(songs, keyword)
         raise ValueError("搜歌来源可选网易、QQ或本地。")
 
     async def resolve(self, source: dict) -> tuple[dict, str | Path, dict]:

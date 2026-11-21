@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import io
 import json
 from pathlib import Path
 import tempfile
@@ -15,7 +14,10 @@ from astrbot.api import logger
 from astrbot.api.message_components import File, Record
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
-from .singing_protocol import AUDIO_SUFFIXES, MAX_SOURCE_BYTES, source_from_text, validate_clip
+from .singing_protocol import (
+    AUDIO_SUFFIXES, MAX_AUDIO_SECONDS, MAX_RESULT_BYTES, MAX_SOURCE_BYTES, MAX_VOICE_SECONDS,
+    processing_timeout, source_from_text, validate_clip,
+)
 
 
 class SingingError(Exception):
@@ -80,7 +82,7 @@ class SingingClient:
     async def upload_file(self, event) -> dict:
         value = self.files.get(self.owner(event))
         if value is None or time.monotonic() - value[0] >= 3600:
-            raise SingingError("请先在这个会话发送音频文件，再使用“翻唱 文件 时间段”。只使用你自己最近一小时发送的文件。")
+            raise SingingError("请先在这个会话发送音频文件，再使用“翻唱 文件”，默认整首。只使用你自己最近一小时发送的文件。")
         part = value[1]
         async with self.upload_lock:
             location = await part.get_file(allow_return_url=True)
@@ -128,12 +130,16 @@ class SingingClient:
                     content=chunks(), headers={"Content-Type": "application/octet-stream"}, timeout=120)
                 return result.json()
 
-    async def start(self, event, choice: str, start: float, end: float, pitch=0, mode="voice") -> str:
+    async def start(self, event, choice: str, start: float | None = None, end: float | None = None, pitch=0, mode="auto") -> str:
         if event.unified_msg_origin not in self.allowed_origins():
             raise SingingError("当前会话未获准请求翻唱。")
         validate_clip(start, end, pitch)
-        if mode not in {"voice", "file"}:
-            raise ValueError("发送方式可选语音或文件。")
+        if mode not in {"auto", "voice", "file"}:
+            raise ValueError("发送方式可选auto、voice或file。")
+        if mode == "auto":
+            mode = "file" if start is None or end - start > MAX_VOICE_SECONDS else "voice"
+        if mode == "voice" and (start is None or end - start > MAX_VOICE_SECONDS):
+            raise ValueError("整首或超过30秒请使用MP3文件；语音仅支持明确指定的30秒内片段。")
         if event.get_extra("lonelyfriend_cover_requested", False):
             raise SingingError("本轮已提交过翻唱请求，不会重复提交。")
         health = (await self.request("GET", "/v1/health", timeout=2)).json()
@@ -159,7 +165,8 @@ class SingingClient:
         job_id = uuid.uuid4().hex
         origin, sender = self.owner(event)
         job = {"id": job_id, "origin": origin, "sender": sender, "created_at": time.time(),
-               "delivery": "not_sent", "mode": mode, "status": "submission_unknown"}
+               "delivery": "not_sent", "mode": mode, "status": "submission_unknown",
+               "duration": end - start if start is not None else None}
         self.jobs.append(job)
         self.save()
         response = await self.request("POST", "/v1/jobs", json={"id": job_id, "source": source,
@@ -201,30 +208,33 @@ class SingingClient:
             raise SingingError("当前会话已移出允许名单，音频未发送。")
         if job.get("cancel_requested"):
             raise SingingError("此任务已请求取消，音频未发送。")
-        data = bytearray()
         suffix = ".mp3" if job["mode"] == "file" else ".wav"
-        async with self.http.stream("GET", f"/v1/jobs/{job['id']}/audio", params={"format": job["mode"]}) as response:
-            if response.status_code != 200:
-                raise SingingError("成品尚未可用或缓存已过期，请先查询翻唱状态。")
-            async for chunk in response.aiter_bytes():
-                data.extend(chunk)
-                if len(data) > 8 * 1024 * 1024:
-                    raise SingingError("成品超过8MB发送上限。")
-        if job["mode"] == "voice":
-            with wave.open(io.BytesIO(data)) as audio:
-                frames = audio.getnframes()
-                if (audio.getnchannels() != 1 or audio.getsampwidth() != 2 or audio.getframerate() != 24000
-                        or not 1 <= frames / 24000 <= 30.1 or len(audio.readframes(frames)) != frames * 2):
-                    raise SingingError("成品语音格式或时长校验失败。")
-        elif not data.startswith((b"ID3", b"\xff")):
-            raise SingingError("成品不是MP3音频。")
         directory = Path(get_astrbot_temp_path())
         directory.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(prefix="cover_", suffix=suffix, dir=directory, delete=False) as output:
-            output.write(data)
             path = Path(output.name)
         try:
-            component = File(name="祀-翻唱片段.mp3", file=str(path)) if job["mode"] == "file" else Record.fromFileSystem(path)
+            count = 0
+            async with self.http.stream("GET", f"/v1/jobs/{job['id']}/audio", params={"format": job["mode"]}, timeout=120) as response:
+                if response.status_code != 200:
+                    raise SingingError("成品尚未可用或缓存已过期，请先查询翻唱状态。")
+                with path.open("wb") as output:
+                    async for chunk in response.aiter_bytes():
+                        count += len(chunk)
+                        if count > MAX_RESULT_BYTES:
+                            raise SingingError("成品超过90MB发送上限。")
+                        output.write(chunk)
+            if job["mode"] == "voice":
+                with wave.open(str(path)) as audio:
+                    frames = audio.getnframes()
+                    if (audio.getnchannels() != 1 or audio.getsampwidth() != 2 or audio.getframerate() != 24000
+                            or not 1 <= frames / 24000 <= MAX_VOICE_SECONDS + 0.1 or len(audio.readframes(frames)) != frames * 2):
+                        raise SingingError("成品语音格式或时长校验失败。")
+            else:
+                with path.open("rb") as audio:
+                    if not audio.read(3).startswith((b"ID3", b"\xff")):
+                        raise SingingError("成品不是MP3音频。")
+            component = File(name="祀-翻唱.mp3", file=str(path)) if job["mode"] == "file" else Record.fromFileSystem(path)
             if job.get("cancel_requested"):
                 raise SingingError("此任务已请求取消，音频未发送。")
             job["delivery"] = "sending"
@@ -242,7 +252,7 @@ class SingingClient:
 
     async def poll(self, event, job: dict):
         try:
-            async with asyncio.timeout(900):
+            async with asyncio.timeout(processing_timeout(job.get("duration") or MAX_AUDIO_SECONDS) + 180):
                 while True:
                     state = (await self.request("GET", "/v1/jobs/" + job["id"])).json()
                     job["status"] = state["status"]

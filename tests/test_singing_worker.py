@@ -131,8 +131,64 @@ class WorkerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state["status"], "done")
         self.assertTrue(state["cache_hit"])
 
+    async def test_full_song_resolves_actual_length_and_keeps_one_mp3_without_long_wav(self):
+        original = self.path / "whole.wav"
+        await self.worker.run_process([self.worker.ffmpeg, "-v", "error", "-f", "lavfi", "-i",
+            "sine=frequency=220:duration=45", "-ac", 2, "-ar", 44100, original], self.path / "source.log")
+        self.worker.sources.library["whole"] = {"path": str(original), "title": "whole song", "duration": 45}
+        run_process = self.worker.run_process
+        inference_calls = []
+
+        async def render_without_gpu(args, log, *, inference=False, timeout=30):
+            if inference:
+                values = list(map(str, args))
+                self.assertEqual(float(values[values.index("--start") + 1]), 0)
+                self.assertAlmostEqual(float(values[values.index("--duration") + 1]), 45)
+                inference_calls.append(values)
+                output = Path(values[values.index("--output") + 1])
+                output.mkdir()
+                (output / "si-cover-+0.wav").write_bytes(original.read_bytes())
+            else:
+                await run_process(args, log, timeout=timeout)
+
+        self.worker.run_process = render_without_gpu
+        payload = {"id": uuid.uuid4().hex, "source": {"source": "local", "id": "whole"}}
+        response = await self.http.post("/v1/jobs", json=payload, headers=self.headers)
+        self.assertEqual(response.status, 202)
+        await asyncio.wait_for(self.worker.task, 10)
+        state = self.worker.load(payload["id"])
+        self.assertEqual(state["status"], "done", state.get("error"))
+        self.assertAlmostEqual(state["duration"], 45)
+        self.assertEqual(len(inference_calls), 1)
+        self.assertIsNone(state["params"]["start"])
+        cache = self.worker.cache / state["cache_key"]
+        self.assertFalse((cache / "voice.wav").exists())
+        response = await self.http.get(f"/v1/jobs/{payload['id']}/audio", headers=self.headers)
+        self.assertEqual(response.status, 200)
+        self.assertTrue((await response.read()).startswith(b"ID3"))
+        response = await self.http.get(f"/v1/jobs/{payload['id']}/audio?format=voice", headers=self.headers)
+        self.assertEqual(response.status, 422)
+        response = await self.http.post("/v1/jobs", json=payload, headers=self.headers)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(len(inference_calls), 1)
+        for params in ({"start": 5}, {"end": 20}, {"start": 0, "end": 3601}):
+            response = await self.http.post("/v1/jobs", json={**payload, "id": uuid.uuid4().hex, **params}, headers=self.headers)
+            self.assertEqual(response.status, 422)
+
 
 class SourceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_song_name_keeps_exact_matches_instead_of_unrequested_remixes(self):
+        sources = MusicSources({})
+        await sources.http.aclose()
+        async def respond(request):
+            return httpx.Response(200, json={"code": 200, "result": {"songs": [
+                {"id": 1, "name": "5:20AM（DJ remix）", "artists": [{"name": "DJ"}], "album": {"name": "mix"}, "duration": 200000},
+                {"id": 2, "name": "5:20AM", "artists": [{"name": "original"}], "album": {"name": "song"}, "duration": 200000}]}})
+        sources.http = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+        self.addAsyncCleanup(sources.close)
+        self.assertEqual([s["id"] for s in await sources.search("《5:20am》", "netease")], ["2"])
+        self.assertIn("1", [s["id"] for s in await sources.search("5:20am DJ", "netease")])
+
     async def test_local_catalog_matches_artist_title_and_original_filename(self):
         sources = MusicSources({"1874-live": {"title": "1874 (Live)", "artist": "陈奕迅", "duration": 308,
                                               "path": "E:/Music/现场版1874.mp3"}})
@@ -159,7 +215,8 @@ class SourceTests(unittest.IsolatedAsyncioTestCase):
 
     def test_timestamps_and_known_source_links(self):
         self.assertEqual(interval("3:53-4:15.5"), (233, 255.5))
-        for value in ["3:70-4:00", "-1-20", "0:00-1:00", "NaN-30"]:
+        self.assertEqual(interval("0:00-1:00"), (0, 60))
+        for value in ["3:70-4:00", "-1-20", "0:00-61:00", "NaN-30"]:
             with self.assertRaises(ValueError):
                 interval(value)
         self.assertEqual(source_from_text("https://music.163.com/#/song?id=67014"), {"source": "netease", "id": "67014"})

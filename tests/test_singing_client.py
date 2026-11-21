@@ -148,13 +148,47 @@ class SingingClientTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_time_and_repeated_request_do_not_create_extra_jobs(self):
         event = self.event()
         with self.assertRaises(ValueError):
-            await self.client.start(event, "本地:sample", 0, 60)
+            await self.client.start(event, "本地:sample", 0, 3601)
         self.assertEqual(self.calls, [])
         await self.client.start(event, "本地:sample", 0, 2)
         with self.assertRaisesRegex(singing.SingingError, "本轮已提交"):
             await self.client.start(event, "本地:sample", 0, 2)
         await self.finish()
         self.assertEqual(sum(r.method == "POST" and r.url.path == "/v1/jobs" for r in self.calls), 1)
+
+    async def test_full_song_without_times_is_submitted_once_and_sent_as_mp3(self):
+        self.audio = b"ID3" + b"full-song-fixture" * 600000
+        event = self.event()
+        await self.client.start(event, "本地:sample")
+        await self.finish()
+        submitted = [r for r in self.calls if r.method == "POST" and r.url.path == "/v1/jobs"]
+        self.assertEqual(len(submitted), 1)
+        params = json.loads(submitted[0].content)
+        self.assertIsNone(params["start"])
+        self.assertIsNone(params["end"])
+        self.sdk.send_group_msg.assert_awaited_once()
+        self.assertEqual(self.sdk.send_group_msg.await_args.kwargs["message"][0]["type"], "file")
+        self.assertEqual(self.client.last_job(event)["mode"], "file")
+        self.assertFalse(list(self.directory.glob("cover_*")))
+
+    async def test_explicit_long_segment_uses_file_and_invalid_voice_is_rejected_before_submission(self):
+        self.audio = b"ID3" + b"long-segment-fixture"
+        await self.client.start(self.event(), "本地:sample", 30, 95)
+        await self.finish()
+        self.assertEqual(self.client.last_job(self.event())["mode"], "file")
+        count = len(self.calls)
+        for start, end in ((None, None), (0, 31), (0, None)):
+            with self.assertRaises(ValueError):
+                await self.client.start(self.event(), "本地:sample", start, end, mode="voice")
+        self.assertEqual(len(self.calls), count)
+
+    async def test_download_limit_cleans_temp_file_without_sending(self):
+        self.audio = b"ID3" + b"fixture"
+        with patch.object(singing, "MAX_RESULT_BYTES", 8):
+            await self.client.start(self.event(), "本地:sample")
+            await self.finish()
+        self.sdk.send_group_msg.assert_not_awaited()
+        self.assertFalse(list(self.directory.glob("cover_*")))
 
     async def test_cancel_stops_pending_delivery(self):
         self.state = "running"
