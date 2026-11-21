@@ -6,7 +6,7 @@
 
 | ID | 角色 | 来源 |
 | --- | --- | --- |
-| `default` | 孙吧 · 小鲸鱼 | 用户提供的私有人设卡 |
+| `default` | 祀 | 用户提供的私有人设卡 |
 
 卡片位置和显示名称记录在 `config/personas.json`，正文与来源保存在被 Git 忽略的 `data/persona.md`、`data/persona-source.json`。原有角色卡和专用切换入口已移除。使用 `default` 槽位保存当前卡，避免 AstrBot 启动时另外补建内置默认卡。
 

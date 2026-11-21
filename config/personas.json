@@ -1,6 +1,6 @@
 {
   "default": {
-    "name": "孙吧 · 小鲸鱼",
+    "name": "祀",
     "prompt": "../data/persona.md",
     "source": "../data/persona-source.json"
   }

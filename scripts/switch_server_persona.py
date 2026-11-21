@@ -75,8 +75,9 @@ def switch_server(root: Path, persona_id: str) -> dict:
                     if login.get("status") == "ok":
                         client.headers["Authorization"] = "Bearer " + login["data"]["token"]
                         plugins = client.get("/api/v1/plugins").json()["data"]
-                        expected = 9 if (root / "data/extensions.json").is_file() else 4
-                        ready = len([p for p in plugins if p["activated"] and not p["reserved"]]) == expected
+                        expected = {path.name for path in (root / "data/plugins").iterdir()
+                                    if path.is_dir() and not path.name.startswith("_")}
+                        ready = {p["name"] for p in plugins if p["activated"] and not p["reserved"]} == expected
                         if ready:
                             assert not client.get("/api/v1/plugins/failed").json()["data"]
                             persona = client.get("/api/v1/personas/by-id", params={"persona_id": persona_id}).json()["data"]

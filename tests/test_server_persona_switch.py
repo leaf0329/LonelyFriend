@@ -57,6 +57,43 @@ class ServerPersonaSwitchTests(unittest.TestCase):
                 self.module.switch_server(self.root, "replacement")
         self.assert_original_data()
 
+    def test_successful_reset_accepts_the_eight_remaining_plugins(self):
+        plugins = ["astrbot_plugin_memory_companion", "astrbot_plugin_lonelyfriend_memory",
+                   "astrbot_plugin_proactive_chat", "astrbot_plugin_parser", "astrbot_plugin_self_learning",
+                   "astrbot_plugin_lonelyfriend_activities", "astrbot_plugin_meme_generator", "astrbot_plugin_qzone"]
+        for name in plugins:
+            (self.root / "data/plugins" / name).mkdir(parents=True)
+        (self.root / "data/extensions.json").write_text("{}")
+        prompt, _ = self.module.load_card(self.root, "replacement")
+
+        def response(path, **kwargs):
+            if path == "/api/v1/plugins":
+                data = [{"name": name, "activated": True, "reserved": False} for name in plugins]
+                data.append({"name": "builtin_commands", "activated": True, "reserved": True})
+            elif path == "/api/v1/plugins/failed":
+                data = {}
+            elif path == "/api/v1/personas/by-id":
+                data = {"system_prompt": prompt}
+            else:
+                raise AssertionError(path)
+            return SimpleNamespace(json=lambda: {"status": "ok", "data": data})
+
+        client = SimpleNamespace(headers={},
+            post=Mock(return_value=SimpleNamespace(raise_for_status=lambda: None,
+                      json=lambda: {"status": "ok", "data": {"token": "fixture"}})),
+            get=Mock(side_effect=response))
+        clock = SimpleNamespace(monotonic=Mock(side_effect=[0, 1, 111]), sleep=Mock())
+        with self.mocks(), patch.object(self.module, "time", clock), patch.object(self.module.httpx, "Client") as factory:
+            factory.return_value.__enter__.return_value = client
+            result = self.module.switch_server(self.root, "replacement")
+        self.assertTrue(result["chat_service_ready"])
+        self.assertTrue(result["temporary_rollback_removed"])
+        with closing(sqlite3.connect(self.root / "data/data_v4.db")) as database:
+            self.assertEqual(database.execute("SELECT count(*) FROM conversations").fetchone()[0], 0)
+            self.assertIn("replacement fixture", database.execute(
+                "SELECT system_prompt FROM personas WHERE persona_id='replacement'").fetchone()[0])
+        self.assertFalse((self.root / "data/plugin_data/astrbot_plugin_memory_companion").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
