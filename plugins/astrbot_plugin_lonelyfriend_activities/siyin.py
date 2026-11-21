@@ -16,6 +16,8 @@ from astrbot.api import logger
 from astrbot.api.message_components import Plain, Record
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
+from .group_policy import group_voice_requested
+
 
 class SiyinSpeech:
     def __init__(self, config: dict):
@@ -30,6 +32,7 @@ class SiyinSpeech:
             timeout=httpx.Timeout(config["timeout_seconds"], connect=1),
         )
         self.next_attempt = {}
+        self.inflight = set()
 
     async def close(self):
         await self.client.aclose()
@@ -69,10 +72,13 @@ class SiyinSpeech:
 
     async def decorate(self, event, allowed_origins: list[str]):
         result = event.get_result()
-        if (event.is_stopped() or event.get_platform_id() != "cuteq_qq" or event.get_group_id()
+        if (event.is_stopped() or event.get_platform_id() != "cuteq_qq"
                 or event.unified_msg_origin not in allowed_origins or event.get_extra("cron_payload")
                 or result is None or not result.is_llm_result() or not result.chain
                 or not all(isinstance(part, Plain) for part in result.chain)):
+            return
+        group_request = bool(event.get_group_id())
+        if group_request and not group_voice_requested(event):
             return
         text = "\n\n".join(part.text for part in result.chain).strip()
         if not 2 <= len(text) <= self.config["max_chars"] or re.search(r"https?://|```|~~~", text):
@@ -80,12 +86,19 @@ class SiyinSpeech:
         origin = event.unified_msg_origin
         now = time.monotonic()
         if (event.get_extra("lonelyfriend_speech_attempted", False)
-                or now < self.next_attempt.get(origin, 0) or random.random() >= self.config["probability"]):
+                or origin in self.inflight):
+            return
+        if not group_request and (now < self.next_attempt.get(origin, 0) or random.random() >= self.config["probability"]):
             return
         # Reserve before IO so concurrent replies and an offline desktop cannot cause bursts.
         event.set_extra("lonelyfriend_speech_attempted", True)
-        self.next_attempt[origin] = now + self.config["cooldown_seconds"]
-        audio = await self.synthesize(text)
+        if not group_request:
+            self.next_attempt[origin] = now + self.config["cooldown_seconds"]
+        self.inflight.add(origin)
+        try:
+            audio = await self.synthesize(text)
+        finally:
+            self.inflight.remove(origin)
         if audio is not None:
             result.chain = [Record.fromFileSystem(audio, text=text)]
 

@@ -145,9 +145,10 @@ def apply_access(config: dict, access: dict) -> None:
     config["admins_id"] = lists["admin_qq"]
     config["provider_ltm_settings"]["active_reply"]["whitelist"] = lists["group_qq"]
     config["provider_ltm_settings"]["active_reply"]["enable"] = False
+    config["platform_settings"]["ignore_at_all"] = True
 
 
-async def disable_group_conversations(access: dict) -> None:
+async def configure_group_conversations(access: dict) -> None:
     database = SQLiteDatabase(str(ROOT / "data/data_v4.db"))
     try:
         await database.initialize()
@@ -155,8 +156,8 @@ async def disable_group_conversations(access: dict) -> None:
             origin = f"{QQ_PLATFORM_ID}:GroupMessage:{group}"
             preference = await database.get_preference("umo", origin, "session_service_config")
             settings = deepcopy(preference.value["val"]) if preference else {}
-            # Disable the native agent, keeping the session open for plugin commands.
-            settings["llm_enabled"] = False
+            # The interaction plugin gates conversation on actual mentions and bot replies.
+            settings["llm_enabled"] = True
             await database.insert_preference_or_update(
                 "umo", origin, "session_service_config", {"val": settings},
             )
@@ -234,7 +235,7 @@ def main() -> None:
     if (ROOT / "data/stickers/catalog.json").is_file():
         tools.append("lonelyfriend_sticker")
     asyncio.run(set_persona(prompt, tools))
-    asyncio.run(disable_group_conversations(access))
+    asyncio.run(configure_group_conversations(access))
 
     memory = plugin_config("astrbot_plugin_memory_companion")
     memory["memory_summary"]["provider_id"] = PROVIDER_ID

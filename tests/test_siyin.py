@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from plugins.astrbot_plugin_lonelyfriend_activities import siyin
 from astrbot.api.event import MessageChain
-from astrbot.api.message_components import Image, Plain, Record
+from astrbot.api.message_components import At, AtAll, Image, Plain, Record, Reply
 from astrbot.core.message.message_event_result import MessageEventResult, ResultContentType
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
 
@@ -63,14 +63,60 @@ class SiyinTests(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(self.patch.stop)
         self.origin = "cuteq_qq:FriendMessage:12345"
 
-    def event(self, text="你好呀。", *, group="", origin=None, command=False, cron=False, extra_part=None):
+    def event(self, text="你好呀。", *, group="", origin=None, command=False, cron=False, extra_part=None, incoming=None):
         extras = {"cron_payload": {"job": True}} if cron else {}
         chain = [Plain(text)] + ([extra_part] if extra_part else [])
         result = MessageEventResult(chain=chain, result_content_type=(
             ResultContentType.GENERAL_RESULT if command else ResultContentType.LLM_RESULT))
         return SimpleNamespace(is_stopped=lambda: False, get_platform_id=lambda: "cuteq_qq",
             get_group_id=lambda: group, unified_msg_origin=origin or self.origin,
+            get_self_id=lambda: "999999999", get_messages=lambda: incoming or [Plain("你好")],
             get_result=lambda: result, get_extra=extras.get, set_extra=extras.__setitem__)
+
+    async def test_group_voice_requires_actual_at_and_an_explicit_current_message_request(self):
+        origin = "cuteq_qq:GroupMessage:54321"
+        self.speech.config["probability"] = 0
+        self.speech.next_attempt[origin] = float("inf")
+        for request in ("用语音回复我，你今天怎么样？", "请发条语音。", "能不能用语音说一句你好", "不要文字，请用语音回答"):
+            event = self.event(group="54321", origin=origin, incoming=[At(qq="999999999"), Plain(request)])
+            await self.speech.decorate(event, [origin])
+            self.assertIsInstance(event.get_result().chain[0], Record)
+        self.assertEqual(sum(call.method == "POST" for call in self.calls), 4)
+
+    async def test_group_voice_does_not_trigger_from_quotes_other_mentions_or_negative_requests(self):
+        origin = "cuteq_qq:GroupMessage:54321"
+        for incoming in ([At(qq="999999999"), Plain("你好")],
+                         [Reply(id="1", sender_id="999999999"), Plain("用语音回复")],
+                         [At(qq="888888888"), Plain("发条语音")],
+                         [AtAll(), Plain("发条语音")],
+                         [Plain("@祀 用语音回复")],
+                         [At(qq="999999999"), Reply(id="1", sender_id="999999999", message_str="用语音回复"), Plain("继续")],
+                         [At(qq="999999999"), Plain("别发语音，用文字说")],
+                         [At(qq="999999999"), Plain("不要用语音回复我")],
+                         [At(qq="999999999"), Plain("你支持语音回复吗")]):
+            with self.subTest(incoming=incoming):
+                event = self.event(group="54321", origin=origin, incoming=incoming)
+                await self.speech.decorate(event, [origin])
+                self.assertIsInstance(event.get_result().chain[0], Plain)
+        self.assertFalse(self.calls)
+
+    async def test_simultaneous_explicit_group_voice_requests_do_not_queue_multiple_syntheses(self):
+        origin = "cuteq_qq:GroupMessage:54321"
+        incoming = [At(qq="999999999"), Plain("请用语音回复")]
+        events = [self.event(group="54321", origin=origin, incoming=incoming) for _ in range(2)]
+        await asyncio.gather(*(self.speech.decorate(event, [origin]) for event in events))
+        self.assertEqual(sum(call.method == "POST" for call in self.calls), 1)
+
+    async def test_only_explicit_group_voice_requests_get_a_short_spoken_reply_instruction(self):
+        from plugins.astrbot_plugin_lonelyfriend_activities.main import LonelyFriendActivities
+        event = self.event(group="54321", incoming=[At(qq="999999999"), Plain("用语音回复")])
+        request = SimpleNamespace(system_prompt="当前人设")
+        await LonelyFriendActivities.prepare_group_voice_reply(None, event, request)
+        self.assertTrue(request.system_prompt.startswith("当前人设"))
+        self.assertIn("100字", request.system_prompt)
+        request.system_prompt = "当前人设"
+        await LonelyFriendActivities.prepare_group_voice_reply(None, self.event(group="54321"), request)
+        self.assertEqual(request.system_prompt, "当前人设")
 
     async def test_success_becomes_one_qq_voice_with_its_original_text(self):
         event = self.event("第一段。\n\n第二段。")

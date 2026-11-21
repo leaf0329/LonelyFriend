@@ -7,6 +7,7 @@ from pathlib import Path
 
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.message_components import Image, Plain
+from astrbot.api.provider import ProviderRequest
 from astrbot.api.star import Context, Star, register
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 from astrbot.core.star.filter.command import GreedyStr
@@ -14,10 +15,11 @@ from astrbot.core.star import command_management
 from astrbot.core.star.filter.permission import COMMAND_PERMISSION_TYPES, PermissionTypeFilter
 
 from .command_menu import render_menu, visible_commands
+from .group_policy import bot_addressed, group_voice_requested
 from .siyin import load_siyin
 
 
-@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、表情与本地语音", "0.4.0")
+@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、点名群聊与本地语音", "0.4.1")
 class LonelyFriendActivities(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -28,6 +30,17 @@ class LonelyFriendActivities(Star):
     async def terminate(self):
         if self.speech is not None:
             await self.speech.close()
+
+    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE, priority=1000)
+    async def gate_group_conversation(self, event: AstrMessageEvent):
+        if event.get_platform_id() == "cuteq_qq":
+            # Keep commands and link tools running, but gate the native agent separately.
+            event.is_at_or_wake_command = bot_addressed(event)
+
+    @filter.on_llm_request(priority=-90)
+    async def prepare_group_voice_reply(self, event: AstrMessageEvent, request: ProviderRequest):
+        if event.get_platform_id() == "cuteq_qq" and event.get_group_id() and group_voice_requested(event):
+            request.system_prompt += "\n当前群消息点名要求语音回复，系统会负责合成。请直接给出适合朗读的自然台词，控制在100字以内，不添加转语音的说明。\n"
 
     @filter.on_decorating_result(priority=-100)
     async def occasional_speech(self, event: AstrMessageEvent):

@@ -16,7 +16,12 @@ from astrbot.core.pipeline.whitelist_check.stage import WhitelistCheckStage
 from astrbot.core.pipeline.process_stage.stage import ProcessStage
 from astrbot.core.pipeline.process_stage.method.agent_request import AgentRequestSubStage
 from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.star import session_llm_manager
+from astrbot.core.star import session_llm_manager, session_plugin_manager
+from astrbot.core.star.star_handler import EventType, star_handlers_registry
+from astrbot.core.pipeline.waking_check.stage import WakingCheckStage
+from astrbot.core.config.default import DEFAULT_CONFIG
+from astrbot.api.message_components import At, AtAll, Plain, Reply
+from plugins.astrbot_plugin_lonelyfriend_activities.main import LonelyFriendActivities
 from astrbot.core.utils.shared_preferences import SharedPreferences
 from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
 from astrbot.core.platform.message_type import MessageType
@@ -78,24 +83,25 @@ class GroupConversationTests(unittest.IsolatedAsyncioTestCase):
         self.friend = "cuteq_qq:FriendMessage:100000001"
         for origin in (self.group, self.friend):
             await self.database.insert_preference_or_update("umo", origin, "session_service_config", {
-                "val": {"llm_enabled": True, "session_enabled": True, "tts_enabled": False},
+                "val": {"llm_enabled": origin != self.group, "session_enabled": True, "tts_enabled": False},
             })
         with patch.object(configure, "ROOT", self.root):
-            await configure.disable_group_conversations({"group_qq": ["200000001", "200000002"]})
+            await configure.configure_group_conversations({"group_qq": ["200000001", "200000002"]})
         self.preferences = SharedPreferences(self.database, json_storage_path=str(self.root / "unused.json"))
         self.addAsyncCleanup(self.preferences.close)
-        patcher = patch.object(session_llm_manager, "sp", self.preferences)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        for module in (session_llm_manager, session_plugin_manager):
+            patcher = patch.object(module, "sp", self.preferences)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
-    def event(self, *, group=True):
+    def event(self, *, group=True, parts=None, text="验收"):
         message = AstrBotMessage()
         message.type = MessageType.GROUP_MESSAGE if group else MessageType.FRIEND_MESSAGE
         message.sender = MessageMember(user_id="100000001", nickname="隔离验收用户")
         message.group_id = "200000001" if group else ""
-        message.message = []
+        message.message = parts or [Plain(text)]
         message.self_id = "999999999"
-        event = AiocqhttpMessageEvent("验收", message, PlatformMetadata(
+        event = AiocqhttpMessageEvent(text, message, PlatformMetadata(
             name="aiocqhttp", description="isolated policy test", id=QQ_PLATFORM_ID,
         ), message.group_id or message.sender.user_id, bot=None)
         event.is_at_or_wake_command = True
@@ -104,52 +110,76 @@ class GroupConversationTests(unittest.IsolatedAsyncioTestCase):
     async def test_native_policy_preserves_private_session_and_other_service_settings(self):
         manager = session_llm_manager.SessionServiceManager
         for origin in (self.group, "cuteq_qq:GroupMessage:200000002"):
-            self.assertFalse(await manager.is_llm_enabled_for_session(origin))
+            self.assertTrue(await manager.is_llm_enabled_for_session(origin))
             self.assertTrue(await manager.is_session_enabled(origin))
         self.assertTrue(await manager.is_llm_enabled_for_session(self.friend))
         settings = await self.preferences.session_get(self.group, "session_service_config")
-        self.assertEqual(settings, {"llm_enabled": False, "session_enabled": True, "tts_enabled": False})
+        self.assertEqual(settings, {"llm_enabled": True, "session_enabled": True, "tts_enabled": False})
 
-    async def test_group_agent_is_silent_while_private_agent_runs(self):
+    async def process(self, event, *, tool=False):
+        config = copy.deepcopy(DEFAULT_CONFIG)
+        apply_access(config, {"private_qq": ["100000001"], "group_qq": ["200000001"], "admin_qq": []})
+        config["wake_prefix"] = ["/"]
+        context = SimpleNamespace(astrbot_config=config, db_helper=None, astrbot_config_id="test")
+        waking = WakingCheckStage()
+        await waking.initialize(context)
+        handler = next(h for h in star_handlers_registry.get_handlers_by_event_type(
+            EventType.AdapterMessageEvent, only_activated=False) if h.handler_name == "gate_group_conversation")
+        with patch.object(star_handlers_registry, "get_handlers_by_event_type", return_value=[handler]):
+            await waking.process(event)
+        if event.is_stopped():
+            return [], []
         calls = []
 
         async def run_agent(event, prefix):
             calls.append(event.unified_msg_origin)
             yield
 
-        stage = AgentRequestSubStage()
-        stage.ctx = SimpleNamespace(astrbot_config={"provider_settings": {"enable": True}})
-        stage.prov_wake_prefix = ""
-        stage.agent_sub_stage = SimpleNamespace(process=run_agent)
-        for group in (True, False):
-            async for _ in stage.process(self.event(group=group)):
-                pass
-        self.assertEqual(calls, [self.friend])
-
-    async def test_group_tool_result_survives_disabled_agent(self):
-        event = self.event()
-        event.set_extra("activated_handlers", ["tool-command"])
-
-        async def run_command(event):
-            event.set_result(event.plain_result("工具结果"))
-            yield
-
-        async def run_agent(event, prefix):
-            self.fail("A disabled group agent must not run")
-            yield
+        async def run_commands(event):
+            await LonelyFriendActivities.gate_group_conversation(None, event)
+            if tool:
+                event.set_result(event.plain_result("工具结果"))
+                yield
+                event.clear_result()
 
         agent = AgentRequestSubStage()
-        agent.ctx = SimpleNamespace(astrbot_config={"provider_settings": {"enable": True}})
+        agent.ctx = context
         agent.prov_wake_prefix = ""
         agent.agent_sub_stage = SimpleNamespace(process=run_agent)
         stage = ProcessStage()
-        stage.ctx = agent.ctx
+        stage.ctx = context
         stage.agent_sub_stage = agent
-        stage.star_request_sub_stage = SimpleNamespace(process=run_command)
-        results = []
+        stage.star_request_sub_stage = SimpleNamespace(process=run_commands)
+        outputs = []
         async for _ in stage.process(event):
-            results.append(event.get_result().get_plain_text())
-        self.assertEqual(results, ["工具结果"])
+            if event.get_result():
+                outputs.append(event.get_result().get_plain_text())
+        return calls, outputs
+
+    async def test_only_real_mentions_and_replies_to_bot_run_the_group_agent(self):
+        for parts, text, expected in [
+            ([Plain("普通群聊")], "普通群聊", False),
+            ([Plain("/不存在的命令")], "/不存在的命令", False),
+            ([At(qq="all"), Plain("说句话")], "说句话", False),
+            ([AtAll(), Plain("说句话")], "说句话", False),
+            ([At(qq="888888888"), Plain("说句话")], "说句话", False),
+            ([Reply(id="1", sender_id="888888888"), Plain("继续")], "继续", False),
+            ([At(qq="999999999"), Plain("说句话")], "说句话", True),
+            ([Reply(id="1", sender_id="999999999"), Plain("继续")], "继续", True),
+        ]:
+            with self.subTest(parts=parts):
+                event = self.event(parts=parts, text=text)
+                calls, _ = await self.process(event)
+                self.assertEqual(calls, [self.group] if expected else [])
+                self.assertFalse(event.is_stopped())
+        calls, _ = await self.process(self.event(group=False))
+        self.assertEqual(calls, [self.friend])
+
+    async def test_unaddressed_group_tool_result_survives_without_starting_conversation(self):
+        event = self.event()
+        calls, outputs = await self.process(event, tool=True)
+        self.assertEqual(outputs, ["工具结果"])
+        self.assertEqual(calls, [])
         self.assertFalse(event.is_stopped())
 
 
