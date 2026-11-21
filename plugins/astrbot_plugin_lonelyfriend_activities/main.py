@@ -22,7 +22,7 @@ from .singing import load_singing, SingingError
 from .singing_protocol import interval, seconds
 
 
-@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、点名群聊、本地语音与翻唱", "0.6.0")
+@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、点名群聊、本地语音与翻唱", "0.6.1")
 class LonelyFriendActivities(Star):
     def __init__(self, context: Context):
         super().__init__(context)

@@ -167,6 +167,34 @@ class SingingWorker:
             raise ValueError("音源须为60分钟以内的音频。")
         return duration
 
+    async def acquire_remote(self, source: dict, target: Path, end: float | None):
+        providers = ("platform", "gd") if source["source"] == "netease" else ("platform",)
+        for provider in providers:
+            try:
+                if provider == "gd":
+                    info, url, headers = await self.sources.resolve_gd(source)
+                else:
+                    info, url, headers = await self.sources.resolve(source)
+            except (ValueError, httpx.HTTPError, TimeoutError, QQMusicError, BiliError) as error:
+                failure = error
+            else:
+                if end is not None and end > info["duration"] + 0.05:
+                    raise ValueError(f"所选时间超出音源时长（{info['duration']:.1f}秒）。")
+                try:
+                    await self.sources.download(url, source["source"], target, headers)
+                    duration = await self.probe(target)
+                    if abs(duration - info["duration"]) > 3:
+                        raise ValueError("音频长度与完整歌曲不符，可能只有试听。")
+                    return info, duration, provider
+                except (ValueError, httpx.HTTPError, TimeoutError) as error:
+                    failure = error
+            if provider == providers[-1]:
+                if provider == "gd":
+                    raise ValueError("原接口及GD补源都未取得完整音频：" + public_error(failure)) from failure
+                raise failure
+            LOG.info("Platform source unavailable; trying GD for %s/%s: %s",
+                source["source"], source["id"], type(failure).__name__)
+
     def cache_key(self, params: dict, identity: str) -> str:
         source = params["source"]
         fingerprint = {"source": {"source": "upload"} if source["source"] == "upload" else source,
@@ -209,14 +237,13 @@ class SingingWorker:
                     target_duration = info["duration"]
                 else:
                     if source["source"] not in {"upload", "local"}:
-                        info, url, headers = await self.sources.resolve(source)
-                        if params["end"] is not None and params["end"] > info["duration"] + 0.05:
-                            raise ValueError(f"所选时间超出音源时长（{info['duration']:.1f}秒）。")
                         original = work / "original.audio"
-                        await self.sources.download(url, source["source"], original, headers)
-                    duration = await self.probe(original)
-                    if abs(duration - info["duration"]) > 3:
-                        raise ValueError("音频长度与完整歌曲不符，可能只有试听，停止翻唱。")
+                        info, duration, provider = await self.acquire_remote(source, original, params["end"])
+                        job["audio_provider"] = provider
+                    else:
+                        duration = await self.probe(original)
+                        if abs(duration - info["duration"]) > 3:
+                            raise ValueError("音频长度与完整歌曲不符，可能只有试听，停止翻唱。")
                     if params["end"] is not None and params["end"] > duration + 0.05:
                         raise ValueError(f"所选时间超出音源时长（{duration:.1f}秒）。")
                     start = params["start"] if params["start"] is not None else 0

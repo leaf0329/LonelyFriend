@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 import uuid
 import wave
 
@@ -23,13 +23,13 @@ from plugins.astrbot_plugin_lonelyfriend_activities.music_sources import MusicSo
 from plugins.astrbot_plugin_lonelyfriend_activities.singing_protocol import interval, source_from_text
 
 
-def sample():
+def sample(seconds=2):
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as audio:
         audio.setnchannels(1)
         audio.setsampwidth(2)
         audio.setframerate(24000)
-        audio.writeframes(b"\x10\x00\xf0\xff" * 24000)
+        audio.writeframes(b"\x10\x00\xf0\xff" * (12000 * seconds))
     return buffer.getvalue()
 
 
@@ -175,8 +175,104 @@ class WorkerTests(unittest.IsolatedAsyncioTestCase):
             response = await self.http.post("/v1/jobs", json={**payload, "id": uuid.uuid4().hex, **params}, headers=self.headers)
             self.assertEqual(response.status, 422)
 
+    async def test_missing_or_preview_original_uses_gd_for_the_same_track(self):
+        source = {"source": "netease", "id": "123"}
+        info = {"title": "selected song", "duration": 8}
+        for missing in (True, False):
+            with self.subTest(missing=missing):
+                async def original(selected):
+                    if missing:
+                        raise ValueError("原接口未提供完整音频")
+                    return info, "https://m1.music.126.net/preview", {}
+
+                async def download(url, platform, path, headers):
+                    path.write_bytes(sample(2 if url.endswith("preview") else 8))
+
+                self.worker.sources.resolve = original
+                self.worker.sources.download = download
+                self.worker.sources.resolve_gd = AsyncMock(return_value=(info, "https://m1.music.126.net/full", {}))
+                received, duration, provider = await self.worker.acquire_remote(source, self.path / "track.wav", None)
+                self.assertEqual(received, info)
+                self.assertEqual(duration, 8)
+                self.assertEqual(provider, "gd")
+                self.worker.sources.resolve_gd.assert_awaited_once_with(source)
+
+    async def test_successful_original_and_other_platform_failures_do_not_use_gd(self):
+        async def download(url, platform, path, headers):
+            path.write_bytes(sample(8))
+        self.worker.sources.resolve = AsyncMock(return_value=({"title": "song", "duration": 8}, "full", {}))
+        self.worker.sources.download = AsyncMock(side_effect=download)
+        self.worker.sources.resolve_gd = AsyncMock()
+        result = await self.worker.acquire_remote({"source": "netease", "id": "123"}, self.path / "track.wav", None)
+        self.assertEqual(result[2], "platform")
+        self.worker.sources.download.reset_mock()
+        with self.assertRaisesRegex(ValueError, "超出音源时长"):
+            await self.worker.acquire_remote({"source": "netease", "id": "123"}, self.path / "track.wav", 20)
+        self.worker.sources.download.assert_not_awaited()
+        self.worker.sources.resolve.side_effect = ValueError("B站不可用")
+        with self.assertRaisesRegex(ValueError, "B站不可用"):
+            await self.worker.acquire_remote({"source": "bilibili", "id": "BV1Bpn162Ekn", "page": 1}, self.path / "track.wav", None)
+        self.worker.sources.resolve_gd.assert_not_awaited()
+
+    async def test_gd_preview_fails_job_before_gpu_inference(self):
+        info = {"title": "song", "duration": 8}
+        self.worker.sources.resolve = AsyncMock(side_effect=ValueError("原接口不可用"))
+        self.worker.sources.resolve_gd = AsyncMock(return_value=(info, "https://m1.music.126.net/preview", {}))
+        async def download(url, platform, path, headers):
+            path.write_bytes(sample(2))
+        self.worker.sources.download = download
+        self.worker.run_process = AsyncMock()
+        payload = {"id": uuid.uuid4().hex, "source": {"source": "netease", "id": "123"}}
+        response = await self.http.post("/v1/jobs", json=payload, headers=self.headers)
+        self.assertEqual(response.status, 202)
+        await asyncio.wait_for(self.worker.task, 5)
+        state = self.worker.load(payload["id"])
+        self.assertEqual(state["status"], "failed")
+        self.assertIn("GD补源", state["error"])
+        self.assertIn("试听", state["error"])
+        self.worker.run_process.assert_not_awaited()
+        self.assertEqual(list(self.worker.cache.iterdir()), [])
+
+    async def test_cancelling_gd_lookup_does_not_start_download_or_inference(self):
+        entered = asyncio.Event()
+        async def waiting_gd(source):
+            entered.set()
+            await asyncio.Event().wait()
+        self.worker.sources.resolve = AsyncMock(side_effect=ValueError("原接口不可用"))
+        self.worker.sources.resolve_gd = waiting_gd
+        self.worker.sources.download = AsyncMock()
+        self.worker.run_process = AsyncMock()
+        payload = {"id": uuid.uuid4().hex, "source": {"source": "netease", "id": "123"}}
+        await self.http.post("/v1/jobs", json=payload, headers=self.headers)
+        await asyncio.wait_for(entered.wait(), 2)
+        response = await self.http.post(f"/v1/jobs/{payload['id']}/cancel", headers=self.headers)
+        self.assertEqual((await response.json())["status"], "cancelled")
+        self.assertIsNone(self.worker.active)
+        self.worker.sources.download.assert_not_awaited()
+        self.worker.run_process.assert_not_awaited()
+
 
 class SourceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_gd_keeps_selected_id_and_rejects_untrusted_audio_locations(self):
+        sources = MusicSources({})
+        await sources.http.aclose()
+        destination = "https://m1.music.126.net/full.mp3"
+        async def respond(request):
+            if request.url.host == "music.163.com":
+                return httpx.Response(200, json={"songs": [{"name": "selected song", "duration": 8000}]})
+            self.assertEqual(request.url.host, "music-api.gdstudio.xyz")
+            self.assertEqual(dict(request.url.params), {"types": "url", "source": "netease", "id": "123", "br": "320"})
+            return httpx.Response(200, json={"url": destination})
+        sources.http = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+        self.addAsyncCleanup(sources.close)
+        info, url, headers = await sources.resolve_gd({"source": "netease", "id": "123"})
+        self.assertEqual(info, {"title": "selected song", "duration": 8})
+        self.assertEqual(url, destination)
+        for destination in (None, "", "http://127.0.0.1/private", "https://music.126.net.evil.example/file",
+                            "https://user:pass@m1.music.126.net/file", "https://qq.com/different-platform"):
+            with self.assertRaises(ValueError):
+                await sources.resolve_gd({"source": "netease", "id": "123"})
+
     async def test_song_name_keeps_exact_matches_instead_of_unrequested_remixes(self):
         sources = MusicSources({})
         await sources.http.aclose()

@@ -1,4 +1,4 @@
-"""Local source acquisition using the same platform APIs as existing QQ plugins."""
+"""Platform source acquisition with a same-track GD Music fallback."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ from urllib.parse import urlsplit, urlunsplit
 import httpx
 
 from .singing_protocol import MAX_SOURCE_BYTES, validate_source
+
+GD_MUSIC_API = "https://music-api.gdstudio.xyz/api.php"
 
 
 def preferred_titles(songs: list[dict], keyword: str) -> list[dict]:
@@ -27,6 +29,32 @@ class MusicSources:
 
     async def close(self):
         await self.http.aclose()
+
+    async def netease_info(self, identifier: str) -> dict:
+        response = await self.http.get("https://music.163.com/api/song/detail/",
+            params={"id": identifier, "ids": "[" + identifier + "]"})
+        response.raise_for_status()
+        songs = response.json().get("songs", [])
+        if not songs:
+            raise ValueError("网易云未找到这首歌。")
+        song = songs[0]
+        return {"title": song["name"], "duration": song["duration"] / 1000}
+
+    async def resolve_gd(self, source: dict) -> tuple[dict, str, dict]:
+        source = validate_source(source)
+        if source["source"] != "netease":
+            raise ValueError("GD补源当前仅支持网易云歌曲。")
+        info = await self.netease_info(source["id"])
+        response = await self.http.get(GD_MUSIC_API, params={"types": "url", "source": "netease",
+            "id": source["id"], "br": 320}, timeout=15)
+        response.raise_for_status()
+        data = response.json()
+        url = data.get("url") if isinstance(data, dict) else None
+        if not isinstance(url, str) or not url:
+            raise ValueError("GD音乐台未提供此曲的音频地址。")
+        if not self.allowed_download(url, "netease"):
+            raise ValueError("GD音乐台返回的地址不属于网易云支持的音频节点。")
+        return info, url, {}
 
     async def search(self, keyword: str, source: str) -> list[dict]:
         if not keyword.strip() or len(keyword) > 100:
@@ -71,20 +99,14 @@ class MusicSources:
             item = self.library[identifier]
             return {"title": item["title"], "duration": item["duration"]}, Path(item["path"]), {}
         if platform == "netease":
-            detail = await self.http.get("https://music.163.com/api/song/detail/",
-                params={"id": identifier, "ids": "[" + identifier + "]"})
-            detail.raise_for_status()
-            songs = detail.json().get("songs", [])
-            if not songs:
-                raise ValueError("网易云未找到这首歌。")
-            song = songs[0]
+            info = await self.netease_info(identifier)
             response = await self.http.get("https://music.163.com/api/song/enhance/player/url",
                 params={"ids": "[" + identifier + "]", "br": 320000})
             response.raise_for_status()
             entries = response.json().get("data", [])
             if not entries or not entries[0].get("url") or entries[0].get("freeTrialInfo"):
                 raise ValueError("网易云未提供完整音频，可能需要账号播放权限。请改用你提供的歌曲文件或可访问的B站链接。")
-            return {"title": song["name"], "duration": song["duration"] / 1000}, entries[0]["url"], {}
+            return info, entries[0]["url"], {}
         if platform == "tencent":
             from qqmusic_api import Client
             from qqmusic_api.modules.song import SongFileInfo

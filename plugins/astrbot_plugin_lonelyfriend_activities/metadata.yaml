@@ -1,6 +1,6 @@
 name: astrbot_plugin_lonelyfriend_activities
 display_name: LonelyFriend 菜单与互动
 desc: 实时命令菜单、点名群聊、表情制作、本地祀音与整首及片段翻唱
-version: v0.6.0
+version: v0.6.1
 author: leaf0329
 astrbot_version: ">=4.29.1"
