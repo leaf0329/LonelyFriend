@@ -25,6 +25,30 @@
 
 人格更新前备份，备份失败则停止该次自动修改。兼容补丁让备份和恢复保留工具权限等人格字段，避免恢复后意外开放所有工具。学习仍可能产生错误理解或风格偏移，需要通过管理页观察、撤销或停用；它不是训练 DeepSeek 的模型权重。
 
+## 本地祀音语音
+
+菜单与互动适配器可调用祀音1.1.0的鉴权接口，将获准QQ私聊的短模型回复转换为一条语音。模型和声线在Windows电脑运行，服务器负责请求音频和QQ发送。群聊、命令结果、定时任务、带附件的结果、代码及链接内容不转换，原有群内仅使用工具的规则保留。回复原文仍由现有模型会话和记忆流程保存。
+
+私有设置为 `data/siyin.json`，格式见 `config/siyin.example.json`。当前默认概率15%、最多120字符、同会话两次尝试间隔至少180秒；先检查本地引擎可用且空闲，总请求等待不超过15秒。失败尝试也进入冷却，避免离线时每轮等待；失败保留原文字，不重复合成或重发QQ消息。完整WAV在服务器验证后才替换结果，临时音频存入现有 `data/temp/`。
+
+本地 `scripts/siyin_link.py` 复用现有 `.cache/ssh/remote.py` 中的SSH依赖与 `known_hosts`，运行在项目Windows Python环境。`data/siyin-link.json` 保存以下连接字段，使用已有服务器、密钥和本地网关端口：
+
+```json
+{
+  "ssh_host": "your-server.example",
+  "ssh_user": "your-existing-ssh-user",
+  "key_file": "your-existing-key.pem",
+  "local_port": 9881,
+  "remote_port": 19881
+}
+```
+
+网关和服务器转发端口均监听 `127.0.0.1`，不开放家庭路由端口或公网语音入口。服务器 `data/siyin.json` 的密钥来自本机祀音 `app/services/config.json` 中的 `gateway.token`，不把密钥放入URL、日志或公开仓库。服务器需要允许SSH远程端口转发；当前部署已核对支持。密钥更新后同步私有配置，并在管理面板重载菜单与互动插件。
+
+当前Windows用户的启动目录有 `LonelyFriend-Siyin.vbs`，负责隐藏启动连接器；`data/连接祀音到QQ.vbs` 可手动启动，文件锁避免重复连接。本地网关退出后连接器释放通道，重新运行后自动接通；网络断开后自动重连，状态在 `data/siyin-link-state.json`，日志在 `logs/siyin-link.log`。连接器不启动或关闭祀音工作台。迁移文件夹后需更新这两个启动入口。
+
+停用服务器语音时，移出私有 `data/siyin.json` 并重载菜单与互动插件。停用本地自动连接时，移除本用户启动目录中的专用入口，再结束状态文件所标识的本项目连接器进程；不要按Python进程名批量结束其他程序。
+
 ## 安装与维护
 
 基础安装不自动加载可选扩展。获取 `sources.lock.json` 中标为 `optional` 的上游插件后，在原有 Linux 环境旁准备附加依赖：

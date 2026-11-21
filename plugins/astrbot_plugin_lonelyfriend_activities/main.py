@@ -14,14 +14,26 @@ from astrbot.core.star import command_management
 from astrbot.core.star.filter.permission import COMMAND_PERMISSION_TYPES, PermissionTypeFilter
 
 from .command_menu import render_menu, visible_commands
+from .siyin import load_siyin
 
 
-@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单与表情工具", "0.3.0")
+@register("astrbot_plugin_lonelyfriend_activities", "leaf0329", "命令菜单、表情与本地语音", "0.4.0")
 class LonelyFriendActivities(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         self.data = Path(get_astrbot_data_path())
         self.meme_lock = asyncio.Lock()
+        self.speech = load_siyin(self.data / "siyin.json")
+
+    async def terminate(self):
+        if self.speech is not None:
+            await self.speech.close()
+
+    @filter.on_decorating_result(priority=-100)
+    async def occasional_speech(self, event: AstrMessageEvent):
+        # Run after final-text restoration and before native paragraph segmentation.
+        if self.speech is not None:
+            await self.speech.decorate(event, self.origins())
 
     def origins(self) -> list[str]:
         access = json.loads((self.data / "cuteq-access.json").read_text(encoding="utf-8-sig"))

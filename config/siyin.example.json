@@ -1,0 +1,9 @@
+{
+  "api_base": "http://127.0.0.1:19881",
+  "api_key": "replace-with-your-siyin-gateway-key",
+  "voice": "si",
+  "probability": 0.15,
+  "max_chars": 120,
+  "cooldown_seconds": 180,
+  "timeout_seconds": 15
+}
