@@ -38,7 +38,8 @@ def main() -> None:
         assert {p["name"] for p in loaded if not p["reserved"] and p["activated"]} == expected
         assert not client.get("/api/v1/plugins/failed").json()["data"]
         commands = client.get("/api/v1/commands").json()["data"]["items"]
-        assert not any(item["plugin"] == "astrbot_plugin_lonelyfriend_activities" and item["handler_name"] != "command_menu" for item in commands)
+        activity_handlers = {item["handler_name"] for item in commands if item["plugin"] == "astrbot_plugin_lonelyfriend_activities"}
+        assert activity_handlers == {"command_menu", "singing_search", "singing_cover", "singing_status", "singing_cancel", "singing_retrieve"}
         jobs = client.get("/api/v1/cron/jobs").json()["data"]
         assert not any((job.get("payload") or {}).get("lonelyfriend_activity") == "lonelyfriend_public_reading_v1" for job in jobs)
         tools = client.get("/api/v1/tools").json()["data"]

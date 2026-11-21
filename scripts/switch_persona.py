@@ -28,6 +28,7 @@ RESET_FILES = (
     "data/formal-start.json",
     "data/plugin_data/astrbot_plugin_proactive_chat/session_data.json",
     "data/plugin_data/astrbot_plugin_proactive_chat/notifications_cache.json",
+    "data/plugin_data/astrbot_plugin_lonelyfriend_activities/singing-jobs.json",
     "data/plugin_data/astrbot_plugin_qzone/posts_5.db",
     "data/plugin_data/astrbot_plugin_qzone/posts_5.db-wal",
     "data/plugin_data/astrbot_plugin_qzone/posts_5.db-shm",

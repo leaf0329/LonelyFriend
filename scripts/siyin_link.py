@@ -9,8 +9,12 @@ from pathlib import Path
 import runpy
 import select
 import socket
+import subprocess
+import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 
 import psutil
@@ -50,13 +54,36 @@ def relay(channel, port):
         channel.close()
 
 
-def state(status, remote_port, error=None):
+def state(status, remote_port, error=None, ports=()):
     value = {"pid": os.getpid(), "created_at": psutil.Process().create_time(),
-             "state": status, "remote_port": remote_port, "error": error,
+             "state": status, "remote_port": remote_port, "ports": list(ports), "error": error,
              "updated_at": datetime.now(timezone.utc).isoformat()}
     temporary = STATE.with_suffix(".tmp")
     temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
     temporary.replace(STATE)
+
+
+def ensure_singing(config: dict, process):
+    path = ROOT / "data/singing-local.json"
+    local = json.loads(path.read_text(encoding="utf-8-sig"))
+    if local["port"] != config["local_port"]:
+        raise ValueError("Singing service and tunnel ports do not match")
+    if available(config["local_port"]):
+        request = urllib.request.Request(f"http://127.0.0.1:{local['port']}/v1/health",
+            headers={"Authorization": "Bearer " + local["api_key"]})
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(request, timeout=2) as response:
+            if json.load(response)["service"] != "lonelyfriend-singing":
+                raise RuntimeError("The local singing port is occupied by another service")
+        return process
+    if process is None or process.poll() is not None:
+        python = ROOT / "runtime/singing-worker/.venv/Scripts/pythonw.exe"
+        with (ROOT / "logs/singing-launch.log").open("ab") as output:
+            process = subprocess.Popen([str(python), str(ROOT / "scripts/singing_service.py")],
+                cwd=ROOT, stdin=subprocess.DEVNULL, stdout=output, stderr=output,
+                creationflags=subprocess.CREATE_NO_WINDOW)
+        LOG.info("Local singing worker started: %s", process.pid)
+    return process
 
 
 def main():
@@ -79,9 +106,21 @@ def main():
         LOG.addHandler(handler)
         LOG.setLevel(logging.INFO)
         remote_port, local_port = config["remote_port"], config["local_port"]
+        singing = config.get("singing")
+        singing_process = None
+
+        def targets():
+            result = [(remote_port, local_port)] if available(local_port) else []
+            if singing and available(singing["local_port"]):
+                result.append((singing["remote_port"], singing["local_port"]))
+            return result
+
         idle = False
         while True:
-            if not available(local_port):
+            if singing:
+                singing_process = ensure_singing(singing, singing_process)
+            forwarding = targets()
+            if not forwarding:
                 if not idle:
                     state("waiting_for_siyin", remote_port)
                     LOG.info("Waiting for the local Siyin service")
@@ -98,17 +137,27 @@ def main():
                                timeout=10, banner_timeout=10, auth_timeout=10)
                 transport = client.get_transport()
                 transport.set_keepalive(15)
-                transport.request_port_forward("127.0.0.1", remote_port)
-                state("connected", remote_port)
-                LOG.info("Private speech tunnel connected")
+                destinations = dict(forwarding)
+
+                def accept(channel, origin, destination):
+                    port = destinations.get(destination[1])
+                    if port is None:
+                        channel.close()
+                        return
+                    threading.Thread(target=relay, args=(channel, port), daemon=True).start()
+
+                for remote, local in forwarding:
+                    transport.request_port_forward("127.0.0.1", remote, handler=accept)
+                state("connected", remote_port, ports=[p[0] for p in forwarding])
+                LOG.info("Private media tunnel connected")
                 probe_at = time.monotonic() + 20
                 check_at = time.monotonic() + 5
                 while transport.is_active():
-                    channel = transport.accept(1)
-                    if channel is not None:
-                        threading.Thread(target=relay, args=(channel, local_port), daemon=True).start()
+                    time.sleep(1)
                     if time.monotonic() >= check_at:
-                        if not available(local_port):
+                        if singing:
+                            singing_process = ensure_singing(singing, singing_process)
+                        if targets() != forwarding:
                             break
                         check_at = time.monotonic() + 5
                     if time.monotonic() >= probe_at:

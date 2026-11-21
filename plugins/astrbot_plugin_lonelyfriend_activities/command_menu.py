@@ -18,7 +18,7 @@ def visible_commands(items, permitted):
     for item in items:
         if not item["enabled"] or not item["plugin_activated"] or item["has_conflict"] or not permitted(item):
             continue
-        category = ("菜单导航" if item["plugin"] == "astrbot_plugin_lonelyfriend_activities" and item["handler_name"] == "command_menu"
+        category = (("菜单导航" if item["handler_name"] == "command_menu" else "音乐翻唱") if item["plugin"] == "astrbot_plugin_lonelyfriend_activities"
                     else PLUGIN_CATEGORIES.get(item["plugin"], item["plugin_display_name"]))
         result.append({**item, "category": category})
         result.extend(visible_commands(item["sub_commands"], permitted))

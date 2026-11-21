@@ -20,6 +20,7 @@ PRIVATE_FILES = (
     "cmd_config.json", "cuteq-private.json", "cuteq-access.json",
     "persona.md", "persona-source.json", "persona-binding.json", "mcp_server.json",
     "siyin.json",
+    "singing.json",
 )
 
 

@@ -88,6 +88,16 @@ def mix_cover(vocals: Path, accompaniment: Path, converted: Path, output: Path) 
             "alignment_samples": difference}
 
 
+def transpose_accompaniment(ffmpeg: Path, source: Path, output: Path, pitch: int, run) -> Path:
+    if pitch % 12 == 0:
+        return source
+    # Non-octave vocal shifts need the accompaniment in the same key.
+    run([ffmpeg, "-hide_banner", "-loglevel", "error", "-i", source,
+         "-af", f"rubberband=tempo=1:pitch={2 ** (pitch / 12):.10f}",
+         "-ar", 44100, "-ac", 2, "-c:a", "pcm_f32le", output])
+    return output
+
+
 def main():
     parser = argparse.ArgumentParser(description="本地短片段翻唱试听，不发送QQ消息")
     parser.add_argument("--source", type=Path, required=True)
@@ -97,7 +107,11 @@ def main():
     parser.add_argument("--pitch-shift", type=int, nargs="+", default=[0, 12])
     parser.add_argument("--steps", type=int, default=40)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--wait-for-parent", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--log-file", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.wait_for_parent and sys.stdin.readline().strip() != "start":
+        raise RuntimeError("翻唱工作进程未确认启动。")
     if not math.isfinite(args.start) or args.start < 0:
         parser.error("起点必须是非负秒数。")
     if not math.isfinite(args.duration) or not 1 <= args.duration <= 30:
@@ -122,7 +136,7 @@ def main():
     report = {"status": "running", "source": str(source), "reference": str(reference),
               "start_seconds": args.start, "duration_seconds": args.duration,
               "steps": args.steps, "variants": []}
-    log_path = output / "inference.log"
+    log_path = args.log_file.resolve() if args.log_file is not None else output / "inference.log"
 
     def run(command, cwd=ROOT, timeout=600):
         with log_path.open("ab") as log:
@@ -155,7 +169,9 @@ def main():
                 if len(converted_files) != 1:
                     raise ValueError("转换结果应包含且仅包含一个音频文件。")
                 final = output / f"si-cover-{pitch:+}.wav"
-                result = mix_cover(stems / "vocals.wav", stems / "no_vocals.wav",
+                backing = transpose_accompaniment(ffmpegs[0], stems / "no_vocals.wav",
+                                                  converted_dir / "backing.wav", pitch, run)
+                result = mix_cover(stems / "vocals.wav", backing,
                                    converted_files[0], final)
                 result.update({"pitch_shift": pitch, "path": str(final),
                                "elapsed_seconds": round(time.monotonic() - variant_started, 2)})

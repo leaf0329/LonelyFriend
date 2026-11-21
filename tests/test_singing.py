@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -11,7 +12,7 @@ import numpy as np
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from scripts.sing_cover import gpu_slot, mix_cover
+from scripts.sing_cover import gpu_slot, mix_cover, transpose_accompaniment
 
 
 class SingingTests(unittest.TestCase):
@@ -46,6 +47,22 @@ class SingingTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     mix_cover(self.vocals, self.backing, self.converted, self.output)
                 self.assertFalse(self.output.exists())
+
+    def test_non_octave_transposition_preserves_timing_and_changes_the_backing_key(self):
+        ffmpeg = next((Path(__file__).resolve().parents[1] / "runtime/ffmpeg").glob("*/bin/ffmpeg.exe"))
+
+        def run(command):
+            subprocess.run(list(map(str, command)), check=True, capture_output=True, timeout=10,
+                           creationflags=subprocess.CREATE_NO_WINDOW)
+
+        shifted = transpose_accompaniment(ffmpeg, self.backing, self.root / "shifted.wav", 2, run)
+        samples, rate = sf.read(shifted, always_2d=True)
+        self.assertEqual(rate, 44100)
+        self.assertEqual(samples.shape, (44100, 2))
+        spectrum = np.abs(np.fft.rfft(samples[4410:-4410, 0]))
+        frequencies = np.fft.rfftfreq(len(samples) - 8820, 1 / rate)
+        frequency = frequencies[np.argmax(spectrum)]
+        self.assertAlmostEqual(frequency, 220 * 2 ** (2 / 12), delta=2)
 
     @unittest.skipUnless(os.name == "nt", "Siyin's shared mutex is a Windows contract")
     def test_gpu_mutex_rejects_contention_and_releases_after_failure(self):

@@ -1,0 +1,13 @@
+{
+  "port": 9883,
+  "api_key": "same-private-key-as-the-server-config",
+  "reference_file": "E:/YourVoice/ref.wav",
+  "library": {
+    "example-song": {
+      "path": "E:/Music/example.mp3",
+      "title": "示例歌曲",
+      "artist": "歌手",
+      "duration": 240
+    }
+  }
+}
